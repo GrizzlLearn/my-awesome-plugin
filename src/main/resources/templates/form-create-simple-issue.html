@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Simple Form</title>
+</head>
+<body>
+<h2>Create Simple Issue</h2>
+<form method="post">
+	<label for="projectKey">Choose Project:</label><br>
+	<select id="projectKey" name="projectKey">
+		<!--PROJECT_OPTIONS-->
+	</select><br><br>
+
+	<label for="summary">Summary:</label><br>
+	<input type="text" id="summary" name="summary"><br><br>
+
+	<label for="description">Description:</label><br>
+	<textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
+
+	<button type="submit">Create Issue</button>
+</form>
+</body>
+</html>

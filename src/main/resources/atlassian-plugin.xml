@@ -1,0 +1,118 @@
+<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+    </plugin-info>
+
+    <!-- add our i18n resource -->
+    <resource type="i18n" name="i18n" location="my-awesome-plugin"/>
+    
+    <!-- add our web resources -->
+    <web-resource key="my-awesome-plugin-resources" name="my-awesome-plugin Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        
+        <resource type="download" name="my-awesome-plugin.css" location="/css/my-awesome-plugin.css"/>
+        <resource type="download" name="my-awesome-plugin.js" location="/js/my-awesome-plugin.js"/>
+        <resource type="download" name="images/" location="/images"/>
+
+        <context>my-awesome-plugin</context>
+    </web-resource>
+
+    <web-resource key="react-app-resources" name="React Frontend Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <resource type="download" name="index.html" location="static/index.html"/>
+        <resource type="download" name="static/" location="static/static"/>
+        <resource type="download" name="manifest.json" location="static/manifest.json"/>
+        <resource type="download" name="asset-manifest.json" location="static/asset-manifest.json"/>
+        <resource type="download" name="favicon.ico" location="static/favicon.ico"/>
+        <resource type="download" name="robots.txt" location="static/robots.txt"/>
+        <context>my-react-app</context>
+    </web-resource>
+    <!-- Mail Table -->
+    <web-resource key="mail-table-html-resources" name="Mail Table Resources">
+        <resource type="download" name="mail-table.html" location="templates/mail-table.html"/>
+        <context>mail-table-context</context>
+    </web-resource>
+    <web-resource key="mail-table-css-resources" name="Mail Table Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <resource type="download" name="css/mail-table.css" location="/css/mail-table.css"/>
+        <context>atl.general</context>
+    </web-resource>
+    <web-resource key="mail-main-resources" name="Mail Main Resources">
+        <resource type="download" name="mail-main.html" location="templates/mail-main.html"/>
+    </web-resource>
+
+    <!-- Servlet конфигурация -->
+    <servlet name="React UI Servlet" key="react-ui-servlet" class="com.noname.plugin.servlet.TestReactServlet">
+        <url-pattern>/react-ui</url-pattern>
+    </servlet>
+    <servlet name="Create Simple Issue"
+             key="csi-react-ui-servlet"
+             class="com.noname.plugin.servlet.CreateSimpleIssueServlet">
+        <url-pattern>/csi-react-ui</url-pattern>
+    </servlet>
+    <servlet name="Test Logger"
+             key="test-logger-servlet"
+             class="com.noname.plugin.servlet.TestLoggerServlet">
+        <url-pattern>/test-logger-servlet</url-pattern>
+    </servlet>
+    <servlet name="Mail Viewer"
+             key="mail-viewer-servlet"
+             class="com.noname.plugin.servlet.MailViewerServlet">
+        <description>View all saved MailItems</description>
+        <url-pattern>/mail-items/data</url-pattern>
+        <url-pattern>/mail-items/page</url-pattern>
+    </servlet>
+
+    <!-- Web конфигурация -->
+    <web-section key="my_awesome_plugin_config_section"
+                 location="admin_plugins_menu"
+                 weight="1000">
+        <label key="plugin.name"/>
+    </web-section>
+
+    <web-item key="web.item.create.simple.issue"
+              section="admin_plugins_menu/my_awesome_plugin_config_section"
+              weight="10">
+        <label key="create.simple.issue"/>
+        <link>/plugins/servlet/csi-react-ui</link>
+    </web-item>
+    <web-item key="web.item.create.unique.issue"
+              section="admin_plugins_menu/my_awesome_plugin_config_section"
+              weight="20">
+        <label key="create.unique.issue"/>
+        <link>/plugins/servlet/react-ui</link>
+    </web-item>
+    <web-item key="web.item.test.logger.servlet"
+              section="admin_plugins_menu/my_awesome_plugin_config_section"
+              weight="30">
+        <label key="test.logger.servlet"/>
+        <link>/plugins/servlet/test-logger-servlet</link>
+    </web-item>
+    <web-item key="web.item.mail.viewer.servlet"
+              section="admin_plugins_menu/my_awesome_plugin_config_section"
+              weight="40">
+        <label key="mail.viewer.servlet"/>
+        <link>/plugins/servlet/mail-items/</link>
+    </web-item>
+
+    <!-- Active Objects конфигурация -->
+    <ao key="ao-simple-issue-creation-log-module"
+        name="Active Objects Module">
+        <description>The module configuring the Divide Issue template Active Objects</description>
+        <entity>com.noname.plugin.ao.SimpleIssueCreationLog</entity>
+        <entity>com.noname.plugin.ao.MailItemEntity</entity>
+    </ao>
+
+    <!-- Component конфигурация -->
+    <!--<component key="ao-provider"
+               name="ActiveObjects Provider"
+               class="com.noname.plugin.ao.ActiveObjectsProviderImpl"
+               public="true">
+        <interface>com.noname.plugin.ao.ActiveObjectsProvider</interface>
+    </component>-->
+
+</atlassian-plugin>
