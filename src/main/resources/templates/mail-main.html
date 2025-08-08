@@ -1,12 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Mail Items Main Page</title>
-	<link rel="stylesheet" href="/download/resources/com.atlassian.auiplugin:ajs/css/aui.css"/> <!-- если нужен AUI -->
+	<title>Mail Items Viewer - Navigation</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="css/mail-main.css">
 </head>
 <body>
-<h1>Mail Items</h1>
-<a href="/plugins/servlet/mail-items/data" class="aui-button">Показать JSON</a>
-<a href="/plugins/servlet/mail-items/page" class="aui-button">Показать таблицу</a>
+<div class="container">
+	<h1>📧 Mail Items Viewer</h1>
+	<p class="subtitle">Выберите способ просмотра данных о письмах</p>
+
+	<a href="data" class="nav-card">
+		<span class="nav-card-icon">📊</span>
+		<div class="nav-card-title">JSON API</div>
+		<div class="nav-card-desc">Получить все письма в формате JSON для программного использования</div>
+	</a>
+
+	<a href="table" class="nav-card">
+		<span class="nav-card-icon">📋</span>
+		<div class="nav-card-title">HTML Таблица</div>
+		<div class="nav-card-desc">Просмотреть письма в удобной табличной форме</div>
+	</a>
+
+	<div class="stats">
+		💡 Совет: Используйте JSON API для интеграции с другими системами, а HTML таблицу для просмотра в браузере
+	</div>
+</div>
 </body>
 </html>

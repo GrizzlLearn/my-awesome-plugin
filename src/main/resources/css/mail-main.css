@@ -1,0 +1,113 @@
+/* Mail Items Viewer - Main Navigation Styles */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    margin: 0;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    max-width: 500px;
+    width: 100%;
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 35px;
+    font-size: 16px;
+}
+
+.nav-card {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    margin: 20px 0;
+    background-color: #f8f9fa;
+    color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.nav-card:hover::before {
+    left: 100%;
+}
+
+.nav-card:hover {
+    border-color: #0052cc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,82,204,0.15);
+}
+
+.nav-card-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.nav-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.nav-card-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.stats {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 30px;
+    font-size: 14px;
+    color: #1976d2;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    body {
+        padding: 20px 10px;
+    }
+
+    .container {
+        padding: 30px 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+}

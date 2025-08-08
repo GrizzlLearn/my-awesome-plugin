@@ -11,15 +11,6 @@
     <resource type="i18n" name="i18n" location="my-awesome-plugin"/>
     
     <!-- add our web resources -->
-    <web-resource key="my-awesome-plugin-resources" name="my-awesome-plugin Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        
-        <resource type="download" name="my-awesome-plugin.css" location="/css/my-awesome-plugin.css"/>
-        <resource type="download" name="my-awesome-plugin.js" location="/js/my-awesome-plugin.js"/>
-        <resource type="download" name="images/" location="/images"/>
-
-        <context>my-awesome-plugin</context>
-    </web-resource>
 
     <web-resource key="react-app-resources" name="React Frontend Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
@@ -31,19 +22,19 @@
         <resource type="download" name="robots.txt" location="static/robots.txt"/>
         <context>my-react-app</context>
     </web-resource>
-    <!-- Mail Table -->
-    <web-resource key="mail-table-html-resources" name="Mail Table Resources">
-        <resource type="download" name="mail-table.html" location="templates/mail-table.html"/>
-        <context>mail-table-context</context>
-    </web-resource>
-    <web-resource key="mail-table-css-resources" name="Mail Table Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        <resource type="download" name="css/mail-table.css" location="/css/mail-table.css"/>
-        <context>atl.general</context>
-    </web-resource>
+
+    <!-- Mail Main Page -->
     <web-resource key="mail-main-resources" name="Mail Main Resources">
         <resource type="download" name="mail-main.html" location="templates/mail-main.html"/>
     </web-resource>
+
+    <!-- Mail Table Page -->
+    <web-resource key="mail-table-resources" name="Mail Table Resources">
+        <resource type="download" name="mail-table.css" location="css/mail-table.css"/>
+        <context>atl.general</context>
+    </web-resource>
+
+    <!-- Mail Data Page -->
 
     <!-- Servlet конфигурация -->
     <servlet name="React UI Servlet" key="react-ui-servlet" class="com.noname.plugin.servlet.TestReactServlet">
@@ -63,8 +54,8 @@
              key="mail-viewer-servlet"
              class="com.noname.plugin.servlet.MailViewerServlet">
         <description>View all saved MailItems</description>
-        <url-pattern>/mail-items/data</url-pattern>
-        <url-pattern>/mail-items/page</url-pattern>
+        <url-pattern>/mail-items</url-pattern>
+        <url-pattern>/mail-items/*</url-pattern>
     </servlet>
 
     <!-- Web конфигурация -->
@@ -73,7 +64,6 @@
                  weight="1000">
         <label key="plugin.name"/>
     </web-section>
-
     <web-item key="web.item.create.simple.issue"
               section="admin_plugins_menu/my_awesome_plugin_config_section"
               weight="10">
@@ -108,11 +98,5 @@
     </ao>
 
     <!-- Component конфигурация -->
-    <!--<component key="ao-provider"
-               name="ActiveObjects Provider"
-               class="com.noname.plugin.ao.ActiveObjectsProviderImpl"
-               public="true">
-        <interface>com.noname.plugin.ao.ActiveObjectsProvider</interface>
-    </component>-->
 
 </atlassian-plugin>
