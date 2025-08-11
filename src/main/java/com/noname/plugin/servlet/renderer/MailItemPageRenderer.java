@@ -1,6 +1,7 @@
 package com.noname.plugin.servlet.renderer;
 
-import com.atlassian.plugin.webresource.WebResourceManager;
+import com.atlassian.webresource.api.assembler.PageBuilderService;
+import com.atlassian.webresource.api.assembler.RequiredResources;
 import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,10 +24,10 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
 public class MailItemPageRenderer {
     private static final Logger log = Logger.getLogger(MailItemPageRenderer.class.getName());
 
-    private final WebResourceManager webResourceManager;
+    private final PageBuilderService pageBuilderService;
 
-    public MailItemPageRenderer(WebResourceManager webResourceManager) {
-        this.webResourceManager = checkNotNull(webResourceManager);
+    public MailItemPageRenderer(PageBuilderService pageBuilderService) {
+        this.pageBuilderService = checkNotNull(pageBuilderService);
     }
 
     /**
@@ -59,8 +60,9 @@ public class MailItemPageRenderer {
         resp.setContentType(HTML_CONTENT_TYPE);
 
         try {
-            // Include CSS resources through WebResourceManager
-            webResourceManager.requireResource(MAIL_TABLE_RESOURCES);
+            // Include CSS resources through PageBuilderService
+            RequiredResources requiredResources = pageBuilderService.assembler().resources();
+            requiredResources.requireWebResource(MAIL_TABLE_RESOURCES);
 
             // Load and process template
             InputStream vmStream = getClass().getClassLoader().getResourceAsStream(TABLE_TEMPLATE_PATH);

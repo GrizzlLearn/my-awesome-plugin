@@ -2,7 +2,7 @@ package com.noname.plugin.servlet;
 
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.plugin.webresource.WebResourceManager;
+import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.sal.api.user.UserKey;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.jira.component.ComponentAccessor;
@@ -38,10 +38,10 @@ public class MailViewerServlet extends HttpServlet {
 
     @Inject
     public MailViewerServlet(MailItemService mailItemService,
-                             @ComponentImport WebResourceManager webResourceManager) {
+                             @ComponentImport PageBuilderService pageBuilderService) {
         MailItemService checkedMailItemService = checkNotNull(mailItemService);
         this.requestHandler = new MailItemRequestHandler(checkedMailItemService);
-        this.pageRenderer = new MailItemPageRenderer(checkNotNull(webResourceManager));
+        this.pageRenderer = new MailItemPageRenderer(checkNotNull(pageBuilderService));
         this.testDataInitializer = new TestDataInitializer(checkedMailItemService);
     }
 
@@ -49,7 +49,7 @@ public class MailViewerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             // Инициализация тестовых данных если необходимо
-            //testDataInitializer.initializeIfEmpty();
+            testDataInitializer.initializeIfEmpty();
 
             String requestURI = req.getRequestURI();
 
