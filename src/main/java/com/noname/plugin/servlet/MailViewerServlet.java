@@ -1,8 +1,12 @@
 package com.noname.plugin.servlet;
 
+import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.webresource.WebResourceManager;
+import com.atlassian.sal.api.user.UserKey;
+import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.jira.component.ComponentAccessor;
 import com.noname.plugin.model.MailItem;
 import com.noname.plugin.service.MailItemService;
 import org.apache.log4j.Logger;
@@ -12,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,6 +89,34 @@ public class MailViewerServlet extends HttpServlet {
         if (requestURI.endsWith("/css/mail-table.css")) {
             serveCssFile(resp, "css/mail-table.css");
             return;
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        UserManager userManager = ComponentAccessor.getOSGiComponentInstanceOfType(UserManager.class);
+        UserKey userKey = userManager.getRemoteUserKey();
+
+        ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+        if (user == null) {
+            resp.sendRedirect("/jira/login.jsp");
+        }
+
+        if (!userManager.isSystemAdmin(userKey)) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            resp.setContentType(MediaType.APPLICATION_JSON);
+            resp.getWriter().write("{\"success\":false,\"error\":\"Access denied: Admin rights required\"}");
+            return;
+        }
+
+        String pathInfo = req.getPathInfo();
+
+        if ("/delete-all".equals(pathInfo)) {
+            handleDeleteAll(resp);
+        } else {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            resp.setContentType(MediaType.APPLICATION_JSON);
+            resp.getWriter().write("{\"success\":false,\"error\":\"Endpoint not found\"}");
         }
     }
 
@@ -201,6 +234,30 @@ public class MailViewerServlet extends HttpServlet {
             resp.getWriter().write(css.toString());
         } else {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "CSS file not found");
+        }
+    }
+
+    private void handleDeleteAll(HttpServletResponse resp) throws IOException {
+        resp.setContentType(MediaType.APPLICATION_JSON);
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+        try {
+            boolean deleted = mailItemService.deleteAllMailItemsSafe();
+
+            String jsonResponse = String.format(
+                    "{\"success\":true,\"deleted\":%s,\"message\":\"%s\"}",
+                    deleted,
+                    deleted ? "All mail items deleted successfully" : "No mail items to delete"
+            );
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(jsonResponse);
+        } catch (Exception e) {
+            String errorResponse = String.format(
+                    "{\"success\":false,\"error\":\"Failed to delete mail items: %s\"}",
+                    e.getMessage().replace("\"", "\\\"")
+            );
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(errorResponse);
         }
     }
 }

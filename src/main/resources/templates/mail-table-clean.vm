@@ -8,8 +8,33 @@
 	<title>Mail Items Dashboard</title>
 	## Правильный путь к CSS через наш servlet
 	<link rel="stylesheet" type="text/css" href="css/mail-table.css">
+	<style>
+		/* Стили для кнопки удаления */
+		.header .actions {
+			margin-top: 1rem;
+		}
 
-</head>
+		.delete-btn {
+			background-color: #ef4444;
+			color: white;
+			border: none;
+			padding: 0.5rem 1rem;
+			border-radius: 0.375rem;
+			cursor: pointer;
+			font-size: 0.875rem;
+			font-weight: 500;
+			transition: background-color 0.2s;
+		}
+
+		.delete-btn:hover:not(:disabled) {
+			background-color: #dc2626;
+		}
+
+		.delete-btn:disabled {
+			background-color: #9ca3af;
+			cursor: not-allowed;
+		}
+	</style>
 </head>
 <body>
 <div class="container">
@@ -17,7 +42,11 @@
 		<h1>📧 Mail Items Dashboard</h1>
 		<p>Manage and view your mail items with style</p>
 	</div>
-
+	<div class="actions">
+		<button id="delete-all-btn" class="delete-btn">
+			🗑️ Delete All Items
+		</button>
+	</div>
 	<div id="loading" class="loading">
 		<div class="spinner"></div>
 		<p>Loading mail items...</p>
@@ -61,6 +90,57 @@
 		const emptyState = document.getElementById("empty-state");
 		const tableBody = document.getElementById("mail-items-body");
 		const stats = document.getElementById("stats");
+
+		// Function to delete all mail items
+		function deleteAllMailItems() {
+			if (!confirm('Are you sure you want to delete ALL mail items? This action cannot be undone!')) {
+				return;
+			}
+
+			const deleteBtn = document.getElementById('delete-all-btn');
+			const originalText = deleteBtn.textContent;
+
+			// Disable button and show loading state
+			deleteBtn.disabled = true;
+			deleteBtn.textContent = '⏳ Deleting...';
+
+			fetch("/jira/plugins/servlet/mail-items/delete-all", {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			})
+					.then(response => response.json())
+					.then(result => {
+						if (result.success) {
+							// Show success message
+							alert(result.message);
+
+							// Clear the table and show empty state
+							tableBody.innerHTML = '';
+							content.style.display = "none";
+							emptyState.style.display = "block";
+
+						} else {
+							alert('Error: ' + (result.error || 'Failed to delete items'));
+						}
+					})
+					.catch(error => {
+						console.error('Error deleting mail items:', error);
+						alert('Failed to delete mail items. Please check the console for details.');
+					})
+					.finally(() => {
+						// Restore button state
+						deleteBtn.disabled = false;
+						deleteBtn.textContent = originalText;
+					});
+		}
+
+		// Подключаем обработчик события к кнопке
+		const deleteBtn = document.getElementById('delete-all-btn');
+		if (deleteBtn) {
+			deleteBtn.addEventListener('click', deleteAllMailItems);
+		}
 
 		// Function to create expandable content
 		function createExpandableContent(text, maxLength = 100) {

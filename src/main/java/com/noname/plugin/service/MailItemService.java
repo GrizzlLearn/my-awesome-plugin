@@ -58,6 +58,16 @@ public class MailItemService {
         return array.toString();
     }
 
-
-
+    public boolean deleteAllMailItemsSafe() {
+        try {
+            MailItemEntity[] entities = ao.find(MailItemEntity.class);
+            if (entities.length > 0 ) {
+                ao.delete(entities);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при удалении всех объектов email", e);
+        }
+    }
 }
