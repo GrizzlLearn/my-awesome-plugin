@@ -73,13 +73,22 @@ public class MailItemService {
     }
 
     public boolean loadTestData() {
-        createMailItem(new MailItem("qwer", Collections.singletonList("qwer"), "qwer", "qwer"));
-        createMailItem(new MailItem("qwer1", Collections.singletonList("qwer1"), "qwer1", "qwer1"));
-        createMailItem(new MailItem("qwer2", Collections.singletonList("qwer2"), "qwer2", "qwer2"));
-        createMailItem(new MailItem("qwer3", Collections.singletonList("qwer3"), "qwer3", "qwer3"));
         try {
-            MailItemEntity[] entities = ao.find(MailItemEntity.class);
-            return entities.length > 0;
+            // Получаем текущее количество записей для продолжения инкремента
+            int currentCount = getAllMailItems().size();
+            int startIndex = currentCount + 1;
+            
+            // Создаем 5 новых записей, продолжая нумерацию
+            for (int i = startIndex; i < startIndex + 5; i++) {
+                String from = "sender" + i + "@example.com";
+                String to = "recipient" + i + "@example.com";
+                String subject = "Тестовое письмо #" + i;
+                String body = "Это тестовое письмо номер " + i + ". Содержимое письма для проверки функциональности.";
+                
+                createMailItem(new MailItem(from, Collections.singletonList(to), subject, body));
+            }
+            
+            return true;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при создании тестовых данных", e);
         }
