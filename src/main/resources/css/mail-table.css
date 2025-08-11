@@ -150,6 +150,51 @@
     margin-top: 1rem;
 }
 
+/* ===== СТИЛИ ДЛЯ КНОПКИ СОЗДАНИЯ ТЕСТОВЫХ ДАННЫХ ===== */
+
+/* Основные стили кнопки создания тестовых данных */
+.create-btn {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Эффекты при наведении на кнопку создания (если не отключена) */
+.create-btn:hover:not(:disabled) {
+    background-color: #059669;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+/* Стили фокуса для доступности (навигация с клавиатуры) */
+.create-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5);
+}
+
+/* Отключенное состояние кнопки создания */
+.create-btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Активное состояние (при нажатии) */
+.create-btn:active:not(:disabled) {
+    background-color: #047857;
+    transform: translateY(0);
+}
+
+/* ===== СТИЛИ ДЛЯ КНОПКИ УДАЛЕНИЯ ===== */
+
 /* Основные стили кнопки удаления */
 .delete-btn {
     background-color: #ef4444;

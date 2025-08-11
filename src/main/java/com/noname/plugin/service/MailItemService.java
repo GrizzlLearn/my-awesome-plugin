@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,19 @@ public class MailItemService {
             return false;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при удалении всех объектов email", e);
+        }
+    }
+
+    public boolean loadTestData() {
+        createMailItem(new MailItem("qwer", Collections.singletonList("qwer"), "qwer", "qwer"));
+        createMailItem(new MailItem("qwer1", Collections.singletonList("qwer1"), "qwer1", "qwer1"));
+        createMailItem(new MailItem("qwer2", Collections.singletonList("qwer2"), "qwer2", "qwer2"));
+        createMailItem(new MailItem("qwer3", Collections.singletonList("qwer3"), "qwer3", "qwer3"));
+        try {
+            MailItemEntity[] entities = ao.find(MailItemEntity.class);
+            return entities.length > 0;
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при создании тестовых данных", e);
         }
     }
 }

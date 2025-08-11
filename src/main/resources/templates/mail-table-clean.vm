@@ -16,6 +16,9 @@
 		<p>Manage and view your mail items with style</p>
 	</div>
 	<div class="actions">
+		<button id="create-test-data-btn" class="create-btn">
+			📝 Create Test Data
+		</button>
 		<button id="delete-all-btn" class="delete-btn">
 			🗑️ Delete All Items
 		</button>
@@ -64,6 +67,79 @@
 		const tableBody = document.getElementById("mail-items-body");
 		const stats = document.getElementById("stats");
 
+		// Function to reload data
+		function loadData() {
+			// Показать загрузку
+			loading.style.display = "block";
+			content.style.display = "none";
+			emptyState.style.display = "none";
+
+			// Очистить таблицу
+			tableBody.innerHTML = '';
+
+			fetch("/jira/plugins/servlet/mail-items/data")
+					.then(response => {
+						if (!response.ok) {
+							throw new Error(`HTTP error! status: ${response.status}`);
+						}
+						const contentType = response.headers.get("content-type");
+						if (!contentType || !contentType.includes("application/json")) {
+							throw new Error("Response is not JSON");
+						}
+						return response.json();
+					})
+					.then(items => {
+						processMailItems(items);
+					})
+					.catch(error => {
+						console.error('Error fetching mail items:', error);
+						loading.innerHTML =
+								'<div style="color: #ef4444;">' +
+								'<p><strong>Error loading mail items</strong></p>' +
+								'<p style="font-size: 0.9rem; margin-top: 8px;">' +
+								(error.message || 'Please check your connection and try again.') +
+								'</p>' +
+								'</div>';
+					});
+		}
+
+		// Function to create test data
+		function createTestData() {
+			const createBtn = document.getElementById('create-test-data-btn');
+			const originalText = createBtn.textContent;
+
+			// Отключить кнопку и показать состояние загрузки
+			createBtn.disabled = true;
+			createBtn.textContent = '⏳ Creating...';
+
+			fetch("/jira/plugins/servlet/mail-items/create-test-data", {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			})
+					.then(response => response.json())
+					.then(result => {
+						if (result.success) {
+							// Показать сообщение об успехе
+							alert('Test data created successfully!');
+							// Автоматически перезагрузить данные
+							loadData();
+						} else {
+							alert('Error: ' + (result.error || 'Failed to create test data'));
+						}
+					})
+					.catch(error => {
+						console.error('Error creating test data:', error);
+						alert('Failed to create test data. Please check the console for details.');
+					})
+					.finally(() => {
+						// Восстановить состояние кнопки
+						createBtn.disabled = false;
+						createBtn.textContent = originalText;
+					});
+		}
+
 		// Function to delete all mail items
 		function deleteAllMailItems() {
 			if (!confirm('Are you sure you want to delete ALL mail items? This action cannot be undone!')) {
@@ -109,7 +185,12 @@
 					});
 		}
 
-		// Подключаем обработчик события к кнопке
+		// Подключаем обработчики событий к кнопкам
+		const createBtn = document.getElementById('create-test-data-btn');
+		if (createBtn) {
+			createBtn.addEventListener('click', createTestData);
+		}
+
 		const deleteBtn = document.getElementById('delete-all-btn');
 		if (deleteBtn) {
 			deleteBtn.addEventListener('click', deleteAllMailItems);
@@ -199,31 +280,8 @@
 			stats.textContent = 'Showing ' + items.length + ' mail item' + (items.length !== 1 ? 's' : '');
 		}
 
-		// Fetch data from servlet
-		fetch("/jira/plugins/servlet/mail-items/data")
-				.then(response => {
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					const contentType = response.headers.get("content-type");
-					if (!contentType || !contentType.includes("application/json")) {
-						throw new Error("Response is not JSON");
-					}
-					return response.json();
-				})
-				.then(items => {
-					processMailItems(items);
-				})
-				.catch(error => {
-					console.error('Error fetching mail items:', error);
-					loading.innerHTML =
-							'<div style="color: #ef4444;">' +
-							'<p><strong>Error loading mail items</strong></p>' +
-							'<p style="font-size: 0.9rem; margin-top: 8px;">' +
-							(error.message || 'Please check your connection and try again.') +
-							'</p>' +
-							'</div>';
-				});
+		// Загрузить данные при загрузке страницы
+		loadData();
 	});
 </script>
 </body>

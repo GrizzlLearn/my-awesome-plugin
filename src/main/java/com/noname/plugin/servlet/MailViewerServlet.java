@@ -113,6 +113,8 @@ public class MailViewerServlet extends HttpServlet {
 
         if ("/delete-all".equals(pathInfo)) {
             handleDeleteAll(resp);
+        } else if ("/create-test-data".equals(pathInfo)) {
+            handleCreateTestData(resp);
         } else {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             resp.setContentType(MediaType.APPLICATION_JSON);
@@ -254,6 +256,30 @@ public class MailViewerServlet extends HttpServlet {
         } catch (Exception e) {
             String errorResponse = String.format(
                     "{\"success\":false,\"error\":\"Failed to delete mail items: %s\"}",
+                    e.getMessage().replace("\"", "\\\"")
+            );
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().write(errorResponse);
+        }
+    }
+
+    private void handleCreateTestData(HttpServletResponse resp) throws IOException {
+        resp.setContentType(MediaType.APPLICATION_JSON);
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+        try {
+            boolean createTestData = mailItemService.loadTestData();
+
+            String jsonResponse = String.format(
+                    "{\"success\":true,\"added\":%s,\"message\":\"%s\"}",
+                    createTestData,
+                    createTestData ? "Success" : "Error"
+            );
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(jsonResponse);
+        } catch (Exception e) {
+            String errorResponse = String.format(
+                    "{\"success\":false,\"error\":\"Failed to add test data: %s\"}",
                     e.getMessage().replace("\"", "\\\"")
             );
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
