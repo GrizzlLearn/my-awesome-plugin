@@ -15,8 +15,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Renders HTML pages and serves static resources for mail item viewer.
- * Handles template processing and CSS serving.
+ * Отрисовывает HTML-страницы и обслуживает статические ресурсы для просмотрщика почтовых элементов.
+ * Обрабатывает обработку шаблонов и обслуживание CSS.
  * @author dl
  * @date 11.08.2025 22:35
  */
@@ -30,7 +30,7 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Renders the main navigation page
+     * Отрисовывает главную страницу навигации
      */
     public void renderMainPage(HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
@@ -53,7 +53,7 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Renders the table page with WebResourceManager integration
+     * Отрисовывает страницу таблицы с интеграцией WebResourceManager
      */
     public void renderTablePage(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
@@ -81,7 +81,7 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Serves CSS files from classpath
+     * Обслуживает CSS-файлы из classpath
      */
     public void serveCssFile(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURI = req.getRequestURI();

@@ -13,8 +13,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Handles HTTP requests for mail item operations.
- * Separates request handling logic from servlet routing.
+ * Обрабатывает HTTP-запросы для операций с почтовыми элементами.
+ * Отделяет логику обработки запросов от маршрутизации сервлета.
  * @author dl
  * @date 11.08.2025 22:35
  */
@@ -28,7 +28,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles requests for JSON data endpoint
+     * Обрабатывает запросы к конечной точке данных JSON
      */
     public void handleDataRequest(HttpServletResponse resp) throws IOException {
         resp.setContentType(JSON_CONTENT_TYPE);
@@ -45,7 +45,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles delete all mail items request
+     * Обрабатывает запрос на удаление всех почтовых элементов
      */
     public void handleDeleteAllRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -68,7 +68,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles create test data request
+     * Обрабатывает запрос на создание тестовых данных
      */
     public void handleCreateTestDataRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -91,7 +91,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles requests to non-existent endpoints
+     * Обрабатывает запросы к несуществующим конечным точкам
      */
     public void handleNotFoundRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -100,7 +100,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles forbidden access requests
+     * Обрабатывает запросы с запрещенным доступом
      */
     public void handleForbiddenRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -109,7 +109,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Handles internal server errors
+     * Обрабатывает внутренние ошибки сервера
      */
     public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
         setJsonResponseHeaders(resp);

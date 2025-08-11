@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Utility class for initializing test data when needed.
- * Separates test data creation logic from servlet handling.
+ * Вспомогательный класс для инициализации тестовых данных при необходимости.
+ * Отделяет логику создания тестовых данных от обработки сервлетов.
  * @author dl
  * @date 11.08.2025 22:35
  */
@@ -21,8 +21,8 @@ public class TestDataInitializer {
     }
 
     /**
-     * Initializes test data if no mail items exist
-     * @return true if test data was created, false if data already existed
+     * Инициализирует тестовые данные, если почтовые элементы отсутствуют
+     * @return true, если тестовые данные были созданы, false, если данные уже существовали
      */
     public boolean initializeIfEmpty() {
         if (mailItemService.getAllMailItems().isEmpty()) {
@@ -35,8 +35,8 @@ public class TestDataInitializer {
     }
 
     /**
-     * Forces creation of test data regardless of existing data
-     * @return true if test data was created successfully
+     * Принудительно создаёт тестовые данные независимо от существующих данных
+     * @return true, если тестовые данные были успешно созданы
      */
     public boolean forceCreateTestData() {
         log.info("Force creating test data");
@@ -44,16 +44,16 @@ public class TestDataInitializer {
     }
 
     /**
-     * Checks if mail items collection is empty
-     * @return true if no mail items exist
+     * Проверяет, пуста ли коллекция почтовых элементов
+     * @return true, если почтовые элементы отсутствуют
      */
     public boolean isDataEmpty() {
         return mailItemService.getAllMailItems().isEmpty();
     }
 
     /**
-     * Gets current mail items count
-     * @return number of existing mail items
+     * Получает текущее количество почтовых элементов
+     * @return количество существующих почтовых элементов
      */
     public int getMailItemsCount() {
         return mailItemService.getAllMailItems().size();

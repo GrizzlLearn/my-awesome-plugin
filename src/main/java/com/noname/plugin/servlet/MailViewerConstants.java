@@ -1,7 +1,7 @@
 package com.noname.plugin.servlet;
 
 /**
- * Constants and configuration for Mail Viewer Servlet functionality
+ * Константы и конфигурация для функциональности Mail Viewer Servlet
  * @author dl
  * @date 11.08.2025 22:35
  */

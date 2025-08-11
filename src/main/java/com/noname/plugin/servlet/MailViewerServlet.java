@@ -23,8 +23,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Main servlet for Mail Items viewer functionality.
- * Delegates responsibilities to specialized handlers and renderers.
+ * Основной сервлет для функциональности просмотра почтовых элементов.
+ * Делегирует обязанности специализированным обработчикам и рендерам.
  *
  * @author dl
  * @date 24.06.2025 22:54
