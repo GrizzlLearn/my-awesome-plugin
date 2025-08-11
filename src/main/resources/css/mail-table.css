@@ -142,3 +142,51 @@
     margin: 0 0 10px 0;
     color: #495057;
 }
+
+/* ===== СТИЛИ ДЛЯ КНОПОК И ДЕЙСТВИЙ ===== */
+
+/* Контейнер для кнопок действий */
+.header .actions {
+    margin-top: 1rem;
+}
+
+/* Основные стили кнопки удаления */
+.delete-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Состояние hover для кнопки */
+.delete-btn:hover:not(:disabled) {
+    background-color: #dc2626;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+/* Состояние focus для доступности */
+.delete-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
+}
+
+/* Отключенное состояние кнопки */
+.delete-btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Активное состояние (при нажатии) */
+.delete-btn:active:not(:disabled) {
+    background-color: #b91c1c;
+    transform: translateY(0);
+}
