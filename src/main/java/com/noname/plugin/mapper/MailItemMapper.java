@@ -10,8 +10,17 @@ import com.noname.plugin.model.MailItem;
  */
 public class MailItemMapper {
     public static MailItem toDtoFull(MailItemEntity entity) {
-        MailItem mailItem = new MailItem(entity.getTo(), entity.getCc(), entity.getBcc(), 
-                                         entity.getAttachmentsName(), entity.getRawHeaders());
+        // Проверяем, что хотя бы одно поле получателя заполнено
+        String to = entity.getTo();
+        String cc = entity.getCc();
+        String bcc = entity.getBcc();
+        
+        // Если все поля получателей пусты, используем fallback
+        if ((to == null || to.isEmpty()) && (cc == null || cc.isEmpty()) && (bcc == null || bcc.isEmpty())) {
+            to = "unknown@example.com";
+        }
+        
+        MailItem mailItem = new MailItem(to, cc, bcc, entity.getAttachmentsName());
         mailItem.setFrom(entity.getFrom());
         mailItem.setSubject(entity.getSubject());
         mailItem.setBody(entity.getBody());
@@ -35,6 +44,5 @@ public class MailItemMapper {
         entity.setSubject(dto.getSubject());
         entity.setBody(dto.getBody());
         entity.setAttachmentsName(dto.getAttachmentsName());
-        entity.setRawHeaders(dto.getRawHeaders());
     }
 }

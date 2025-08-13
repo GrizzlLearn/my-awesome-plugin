@@ -240,17 +240,11 @@
 							<span class="detail-label">Текст:</span>
 							<div class="view-mode-buttons">
 								<button class="view-mode-btn active" data-mode="preview">📄 Превью</button>
-								<button class="view-mode-btn" data-mode="raw">📋 Полные заголовки</button>
 								<button class="view-mode-btn" data-mode="formatted">🎨 Форматированный</button>
 							</div>
 							
 							<div class="content-view active" data-view="preview">
 								<div class="detail-value" style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">${item.body || 'Пустое сообщение'}</div>
-							</div>
-							
-							<div class="content-view" data-view="raw">
-								<div class="raw-content"></div>
-								<div class="encoding-info">📧 Полные email заголовки и тело письма • RFC 5322 формат</div>
 							</div>
 							
 							<div class="content-view" data-view="formatted">
@@ -266,13 +260,7 @@
 			
 			// Заполняем контент для разных режимов
 			const bodyText = item.body || 'Пустое сообщение';
-			const rawHeaders = item.rawHeaders || '';
-			const rawContent = detailCell.querySelector('.raw-content');
 			const formattedContent = detailCell.querySelector('.formatted-content');
-			
-			// Заполняем raw-контент (полные заголовки + тело письма)
-			const fullRawContent = rawHeaders + (rawHeaders ? '\n\n' : '') + bodyText;
-			rawContent.textContent = fullRawContent;
 			
 			// Заполняем форматированный контент (как HTML)
 			formattedContent.innerHTML = bodyText;
