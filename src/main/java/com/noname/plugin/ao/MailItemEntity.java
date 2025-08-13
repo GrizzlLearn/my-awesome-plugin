@@ -38,4 +38,7 @@ public interface MailItemEntity extends Entity {
 
     String getAttachmentsName();
     void setAttachmentsName(String attachmentsName);
+
+    String getRawHeaders();
+    void setRawHeaders(String rawHeaders);
 }

@@ -235,3 +235,245 @@
     background-color: #b91c1c;
     transform: translateY(0);
 }
+
+/* ===== СТИЛИ ДЛЯ РАСКРЫВАЮЩИХСЯ СТРОК ===== */
+
+/* Основная строка таблицы */
+.mail-table tr {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mail-table tr:hover {
+    background-color: #f1f5f9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Индикатор раскрытия */
+.expand-indicator {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-right: 8px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.expand-indicator.expanded {
+    transform: rotate(90deg);
+}
+
+/* Детальная строка */
+.detail-row {
+    display: none;
+    background-color: #f8fafc;
+    border-top: none !important;
+}
+
+.detail-row.expanded {
+    display: table-row;
+    animation: slideDown 0.3s ease-out;
+}
+
+.detail-row td {
+    padding: 20px 15px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Контент детальной информации */
+.detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    font-size: 0.9rem;
+}
+
+.detail-section {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.detail-section h4 {
+    margin: 0 0 10px 0;
+    color: #374151;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.detail-field {
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #6b7280;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.detail-value {
+    color: #374151;
+    word-break: break-all;
+}
+
+.detail-value.email {
+    color: #667eea;
+}
+
+.detail-value.uuid {
+    font-family: monospace;
+    font-size: 0.8rem;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Анимация появления */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Кнопки режимов просмотра письма */
+.view-mode-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.view-mode-btn {
+    background-color: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.view-mode-btn:hover {
+    background-color: #5a67d8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.view-mode-btn.active {
+    background-color: #4c51bf;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+}
+
+.view-mode-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5);
+}
+
+/* Контейнеры для разных режимов просмотра */
+.content-view {
+    display: none;
+}
+
+.content-view.active {
+    display: block;
+}
+
+.raw-content {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 15px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 300px;
+    overflow-y: auto;
+    line-height: 1.4;
+    border: 1px solid #374151;
+}
+
+.formatted-content {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    max-height: 300px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.formatted-content h1, .formatted-content h2, .formatted-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.formatted-content p {
+    margin-bottom: 10px;
+}
+
+.formatted-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.formatted-content a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.formatted-content a:hover {
+    text-decoration: underline;
+}
+
+/* Информация о кодировке */
+.encoding-info {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 8px;
+    padding: 4px 8px;
+    background: #f9fafb;
+    border-radius: 4px;
+    border-left: 3px solid #d1d5db;
+}
+
+/* Стили для мобильных устройств */
+@media (max-width: 768px) {
+    .detail-content {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .detail-field {
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        min-width: auto;
+        margin-right: 0;
+        margin-bottom: 4px;
+    }
+    
+    .view-mode-buttons {
+        justify-content: center;
+    }
+    
+    .view-mode-btn {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+}

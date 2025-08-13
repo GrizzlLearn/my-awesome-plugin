@@ -13,6 +13,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Getter
+@Setter
 public class MailItem extends Email {
 
     /**
@@ -24,6 +25,11 @@ public class MailItem extends Email {
      * Имена вложений (дополнительное поле)
      */
     private String attachmentsName;
+
+    /**
+     * Полные email заголовки для отображения в raw-режиме
+     */
+    private String rawHeaders;
 
     /**
      * Конструктор с обязательным получателем
@@ -53,6 +59,15 @@ public class MailItem extends Email {
     public MailItem(String to, String cc, String bcc, String attachmentsName) {
         super(to, cc, bcc);
         this.attachmentsName = attachmentsName;
+    }
+
+    /**
+     * Конструктор с полным набором полей включая заголовки
+     */
+    public MailItem(String to, String cc, String bcc, String attachmentsName, String rawHeaders) {
+        super(to, cc, bcc);
+        this.attachmentsName = attachmentsName;
+        this.rawHeaders = rawHeaders;
     }
 
     // Все остальные свойства (from, to, cc, bcc, subject, body)

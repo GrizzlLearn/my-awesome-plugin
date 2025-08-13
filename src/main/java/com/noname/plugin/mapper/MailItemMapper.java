@@ -10,7 +10,8 @@ import com.noname.plugin.model.MailItem;
  */
 public class MailItemMapper {
     public static MailItem toDtoFull(MailItemEntity entity) {
-        MailItem mailItem = new MailItem(entity.getTo(), entity.getCc(), entity.getBcc(), entity.getAttachmentsName());
+        MailItem mailItem = new MailItem(entity.getTo(), entity.getCc(), entity.getBcc(), 
+                                         entity.getAttachmentsName(), entity.getRawHeaders());
         mailItem.setFrom(entity.getFrom());
         mailItem.setSubject(entity.getSubject());
         mailItem.setBody(entity.getBody());
@@ -34,5 +35,6 @@ public class MailItemMapper {
         entity.setSubject(dto.getSubject());
         entity.setBody(dto.getBody());
         entity.setAttachmentsName(dto.getAttachmentsName());
+        entity.setRawHeaders(dto.getRawHeaders());
     }
 }

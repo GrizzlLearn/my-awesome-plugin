@@ -197,6 +197,114 @@
 			deleteBtn.addEventListener('click', deleteAllMailItems);
 		}
 
+		// Function to create detail row
+		function createDetailRow(item) {
+			const detailRow = document.createElement("tr");
+			detailRow.className = "detail-row";
+			
+			const detailCell = document.createElement("td");
+			detailCell.colSpan = 5;
+			
+			detailCell.innerHTML = `
+				<div class="detail-content">
+					<div class="detail-section">
+						<h4>📧 Основная информация</h4>
+						<div class="detail-field">
+							<span class="detail-label">ID:</span>
+							<span class="detail-value uuid">${item.id || 'Не указан'}</span>
+						</div>
+						<div class="detail-field">
+							<span class="detail-label">От:</span>
+							<span class="detail-value email">${item.from || 'Не указан'}</span>
+						</div>
+						<div class="detail-field">
+							<span class="detail-label">Кому:</span>
+							<span class="detail-value email">${Array.isArray(item.to) ? item.to.join(', ') : (item.to || 'Не указан')}</span>
+						</div>
+						<div class="detail-field">
+							<span class="detail-label">Копия:</span>
+							<span class="detail-value email">${Array.isArray(item.cc) ? item.cc.join(', ') : (item.cc || 'Не указана')}</span>
+						</div>
+						<div class="detail-field">
+							<span class="detail-label">Скрытая:</span>
+							<span class="detail-value email">${Array.isArray(item.bcc) ? item.bcc.join(', ') : (item.bcc || 'Не указана')}</span>
+						</div>
+					</div>
+					<div class="detail-section">
+						<h4>📝 Содержание письма</h4>
+						<div class="detail-field">
+							<span class="detail-label">Тема:</span>
+							<span class="detail-value">${item.subject || 'Без темы'}</span>
+						</div>
+						<div class="detail-field" style="flex-direction: column; align-items: flex-start;">
+							<span class="detail-label">Текст:</span>
+							<div class="view-mode-buttons">
+								<button class="view-mode-btn active" data-mode="preview">📄 Превью</button>
+								<button class="view-mode-btn" data-mode="raw">📋 Полные заголовки</button>
+								<button class="view-mode-btn" data-mode="formatted">🎨 Форматированный</button>
+							</div>
+							
+							<div class="content-view active" data-view="preview">
+								<div class="detail-value" style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">${item.body || 'Пустое сообщение'}</div>
+							</div>
+							
+							<div class="content-view" data-view="raw">
+								<div class="raw-content"></div>
+								<div class="encoding-info">📧 Полные email заголовки и тело письма • RFC 5322 формат</div>
+							</div>
+							
+							<div class="content-view" data-view="formatted">
+								<div class="formatted-content"></div>
+								<div class="encoding-info">🎨 HTML-форматирование • Поддержка тегов и стилей</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+			
+			detailRow.appendChild(detailCell);
+			
+			// Заполняем контент для разных режимов
+			const bodyText = item.body || 'Пустое сообщение';
+			const rawHeaders = item.rawHeaders || '';
+			const rawContent = detailCell.querySelector('.raw-content');
+			const formattedContent = detailCell.querySelector('.formatted-content');
+			
+			// Заполняем raw-контент (полные заголовки + тело письма)
+			const fullRawContent = rawHeaders + (rawHeaders ? '\n\n' : '') + bodyText;
+			rawContent.textContent = fullRawContent;
+			
+			// Заполняем форматированный контент (как HTML)
+			formattedContent.innerHTML = bodyText;
+			
+			// Добавляем обработчики для кнопок режимов просмотра
+			const viewModeButtons = detailCell.querySelectorAll('.view-mode-btn');
+			const contentViews = detailCell.querySelectorAll('.content-view');
+			
+			viewModeButtons.forEach(button => {
+				button.addEventListener('click', function(e) {
+					e.stopPropagation(); // Предотвращаем закрытие строки при клике на кнопку
+					
+					const mode = this.getAttribute('data-mode');
+					
+					// Убираем активный класс со всех кнопок
+					viewModeButtons.forEach(btn => btn.classList.remove('active'));
+					// Добавляем активный класс на текущую кнопку
+					this.classList.add('active');
+					
+					// Скрываем все контентные области
+					contentViews.forEach(view => view.classList.remove('active'));
+					// Показываем нужную контентную область
+					const targetView = detailCell.querySelector(`[data-view="${mode}"]`);
+					if (targetView) {
+						targetView.classList.add('active');
+					}
+				});
+			});
+			
+			return detailRow;
+		}
+
 		// Function to create expandable content
 		function createExpandableContent(text, maxLength = 100) {
 			if (text.length <= maxLength) {
@@ -250,7 +358,7 @@
 
 				const idCell = document.createElement("td");
 				idCell.className = "id-cell";
-				idCell.textContent = item.id || 'Unknown';
+				idCell.innerHTML = '<span class="expand-indicator">▶</span>' + (item.id ? item.id.substring(0, 8) + '...' : 'Unknown');
 
 				const fromCell = document.createElement("td");
 				fromCell.className = "from-cell";
@@ -279,7 +387,23 @@
 				row.appendChild(subjectCell);
 				row.appendChild(bodyCell);
 
+				// Добавляем обработчик клика для раскрытия строки
+				row.addEventListener('click', function() {
+					const detailRow = row.nextElementSibling;
+					const indicator = row.querySelector('.expand-indicator');
+					
+					if (detailRow && detailRow.classList.contains('detail-row')) {
+						// Переключаем состояние раскрытия
+						detailRow.classList.toggle('expanded');
+						indicator.classList.toggle('expanded');
+					}
+				});
+
+				// Создаем детальную строку
+				const detailRow = createDetailRow(item);
+				
 				tableBody.appendChild(row);
+				tableBody.appendChild(detailRow);
 			});
 
 			stats.textContent = 'Showing ' + items.length + ' mail item' + (items.length !== 1 ? 's' : '');
