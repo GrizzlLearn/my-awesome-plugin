@@ -16,6 +16,7 @@ public final class MailViewerConstants {
     // POST Endpoints
     public static final String DELETE_ALL_ENDPOINT = "/delete-all";
     public static final String CREATE_TEST_DATA_ENDPOINT = "/create-test-data";
+    public static final String ADD_EMAIL_ENDPOINT = "/add-email";
 
     // CSS Paths
     public static final String CSS_MAIN_PATH = "/css/mail-main.css";

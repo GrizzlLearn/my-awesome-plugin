@@ -31,14 +31,51 @@ public class MailItemService {
     }
 
     public MailItem createMailItem(MailItem item) {
-        // Извлекаем реальные заголовки из Email объекта
-        String realHeaders = extractRealHeaders(item);
-        item.setRawHeaders(realHeaders);
-        
         MailItemEntity entity = ao.create(MailItemEntity.class);
         MailItemMapper.updateEntity(entity, item);
         entity.save();
         return item;
+    }
+
+    /**
+     * Создает MailItem из объекта Email для внешнего API
+     */
+    public MailItem createMailItemFromEmail(com.atlassian.jira.mail.Email email) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email object cannot be null");
+        }
+        
+        MailItem mailItem = new MailItem(email.getTo(), email.getCc(), email.getBcc());
+        mailItem.setFrom(email.getFrom());
+        mailItem.setSubject(email.getSubject());
+        mailItem.setBody(email.getBody());
+        
+        return createMailItem(mailItem);
+    }
+
+    /**
+     * Создает MailItem из JSON объекта для REST API
+     */
+    public MailItem createMailItemFromJson(JSONObject json) throws JSONException {
+        String to = json.optString("to", null);
+        String cc = json.optString("cc", null);
+        String bcc = json.optString("bcc", null);
+        
+        // Проверяем, что хотя бы одно поле получателя заполнено
+        if ((to == null || to.isEmpty()) && (cc == null || cc.isEmpty()) && (bcc == null || bcc.isEmpty())) {
+            throw new IllegalArgumentException("At least one recipient field (to, cc, bcc) must be provided");
+        }
+        
+        MailItem mailItem = new MailItem(to, cc, bcc);
+        mailItem.setFrom(json.optString("from", null));
+        mailItem.setSubject(json.optString("subject", null));
+        mailItem.setBody(json.optString("body", null));
+        
+        if (json.has("attachmentsName")) {
+            mailItem.setAttachmentsName(json.getString("attachmentsName"));
+        }
+        
+        return createMailItem(mailItem);
     }
 
     public List<MailItem> getAllMailItems() {
@@ -61,7 +98,6 @@ public class MailItemService {
             obj.put("subject", item.getSubject());
             obj.put("body", item.getBody());
             obj.put("attachmentsName", item.getAttachmentsName());
-            obj.put("rawHeaders", item.getRawHeaders());
             array.put(obj);
         }
 
@@ -107,34 +143,5 @@ public class MailItemService {
         }
     }
 
-    /**
-     * Извлекает реальные заголовки из Email объекта
-     */
-    private String extractRealHeaders(MailItem mailItem) {
-        StringBuilder headers = new StringBuilder();
-        try {
-            // Пытаемся получить доступные методы Email класса
-            java.lang.reflect.Method[] methods = mailItem.getClass().getSuperclass().getMethods();
-            for (java.lang.reflect.Method method : methods) {
-                String methodName = method.getName();
-                if (methodName.startsWith("get") && method.getParameterCount() == 0) {
-                    try {
-                        Object value = method.invoke(mailItem);
-                        if (value != null) {
-                            headers.append(methodName.substring(3)).append(": ").append(value).append("\n");
-                        }
-                    } catch (Exception e) {
-                        // Игнорируем ошибки рефлексии
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Возвращаем базовые заголовки если рефлексия не работает
-            headers.append("From: ").append(mailItem.getFrom()).append("\n");
-            headers.append("To: ").append(mailItem.getTo()).append("\n");
-            headers.append("Subject: ").append(mailItem.getSubject()).append("\n");
-        }
-        return headers.toString();
-    }
 
 }

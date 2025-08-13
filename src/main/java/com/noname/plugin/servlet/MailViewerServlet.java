@@ -93,6 +93,8 @@ public class MailViewerServlet extends HttpServlet {
                 requestHandler.handleDeleteAllRequest(resp);
             } else if (CREATE_TEST_DATA_ENDPOINT.equals(pathInfo)) {
                 requestHandler.handleCreateTestDataRequest(resp);
+            } else if (ADD_EMAIL_ENDPOINT.equals(pathInfo)) {
+                requestHandler.handleAddEmailRequest(req, resp);
             } else {
                 requestHandler.handleNotFoundRequest(resp);
             }

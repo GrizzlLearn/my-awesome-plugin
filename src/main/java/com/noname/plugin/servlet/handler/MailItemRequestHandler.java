@@ -1,11 +1,15 @@
 package com.noname.plugin.servlet.handler;
 
 import com.atlassian.jira.util.json.JSONException;
+import com.atlassian.jira.util.json.JSONObject;
 import com.noname.plugin.service.MailItemService;
+import com.noname.plugin.model.MailItem;
 import org.apache.log4j.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -86,6 +90,57 @@ public class MailItemRequestHandler {
 
         } catch (Exception e) {
             log.error("Error creating test data", e);
+            handleInternalError(resp, e);
+        }
+    }
+
+    /**
+     * Обрабатывает запрос на добавление email объекта через API
+     */
+    public void handleAddEmailRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        setJsonResponseHeaders(resp);
+
+        try {
+            // Читаем JSON из тела запроса
+            StringBuilder jsonBuffer = new StringBuilder();
+            String line;
+            try (BufferedReader reader = req.getReader()) {
+                while ((line = reader.readLine()) != null) {
+                    jsonBuffer.append(line);
+                }
+            }
+
+            if (jsonBuffer.length() == 0) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(createErrorResponse("Request body is required"));
+                return;
+            }
+
+            // Парсим JSON
+            JSONObject json = new JSONObject(jsonBuffer.toString());
+            
+            // Создаем MailItem
+            MailItem createdItem = mailItemService.createMailItemFromJson(json);
+
+            // Возвращаем успешный ответ с ID созданного объекта
+            String jsonResponse = String.format(
+                    "{\"success\":true,\"message\":\"Email added successfully\",\"id\":\"%s\"}",
+                    escapeJsonString(createdItem.getId())
+            );
+
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            resp.getWriter().write(jsonResponse);
+
+        } catch (JSONException e) {
+            log.error("Error parsing JSON request", e);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write(createErrorResponse("Invalid JSON format: " + e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid email data", e);
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write(createErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error adding email", e);
             handleInternalError(resp, e);
         }
     }
