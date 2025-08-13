@@ -33,6 +33,7 @@
 			<table class="mail-table">
 				<thead>
 				<tr>
+					<th>ID</th>
 					<th>From</th>
 					<th>To</th>
 					<th>Subject</th>
@@ -247,6 +248,10 @@
 			items.forEach(item => {
 				const row = document.createElement("tr");
 
+				const idCell = document.createElement("td");
+				idCell.className = "id-cell";
+				idCell.textContent = item.id || 'Unknown';
+
 				const fromCell = document.createElement("td");
 				fromCell.className = "from-cell";
 				fromCell.textContent = item.from || 'Unknown';
@@ -268,7 +273,7 @@
 				} else {
 					bodyCell.textContent = bodyContent;
 				}
-
+				row.appendChild(idCell);
 				row.appendChild(fromCell);
 				row.appendChild(toCell);
 				row.appendChild(subjectCell);

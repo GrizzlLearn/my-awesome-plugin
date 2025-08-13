@@ -49,6 +49,7 @@ public class MailItemService {
 
         for (MailItem item : items) {
             JSONObject obj = new JSONObject();
+            obj.put("id", item.getId());
             obj.put("from", item.getFrom());
             obj.put("to", item.getTo());
             obj.put("subject", item.getSubject());
@@ -85,7 +86,11 @@ public class MailItemService {
                 String subject = "Тестовое письмо #" + i;
                 String body = "Это тестовое письмо номер " + i + ". Содержимое письма для проверки функциональности.";
                 
-                createMailItem(new MailItem(from, Collections.singletonList(to), subject, body));
+                MailItem mailItem = new MailItem(to);
+                mailItem.setFrom(from);
+                mailItem.setSubject(subject);
+                mailItem.setBody(body);
+                createMailItem(mailItem);
             }
             
             return true;
