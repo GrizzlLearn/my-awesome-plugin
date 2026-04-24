@@ -236,6 +236,38 @@
     transform: translateY(0);
 }
 
+.delete-btn-confirming {
+    background-color: #b91c1c;
+    animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 1; }
+    to   { opacity: 0.7; }
+}
+
+.json-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: #0052cc;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.json-btn:hover {
+    background-color: #0747a6;
+    color: white;
+    text-decoration: none;
+}
+
 /* ===== СТИЛИ ДЛЯ РАСКРЫВАЮЩИХСЯ СТРОК ===== */
 
 /* Основная строка таблицы */

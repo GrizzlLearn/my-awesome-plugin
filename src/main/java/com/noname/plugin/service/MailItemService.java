@@ -1,6 +1,7 @@
 package com.noname.plugin.service;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.jira.mail.Email;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
@@ -12,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -30,51 +31,43 @@ public class MailItemService {
         this.ao = ao;
     }
 
-    public MailItem createMailItem(MailItem item) {
+    public String createMailItem(Email email) {
+        if (email == null) throw new IllegalArgumentException("Email cannot be null");
+        String uuid = UUID.randomUUID().toString();
         MailItemEntity entity = ao.create(MailItemEntity.class);
-        MailItemMapper.updateEntity(entity, item);
-        entity.save();
-        return item;
-    }
-
-    /**
-     * Создает MailItem из объекта Email для внешнего API
-     */
-    public MailItem createMailItemFromEmail(com.atlassian.jira.mail.Email email) {
-        if (email == null) {
-            throw new IllegalArgumentException("Email object cannot be null");
+        entity.setUuid(uuid);
+        entity.setFrom(email.getFrom());
+        entity.setTo(email.getTo());
+        entity.setCc(email.getCc());
+        entity.setBcc(email.getBcc());
+        entity.setSubject(email.getSubject());
+        entity.setBody(email.getBody());
+        if (email instanceof MailItem) {
+            MailItem mailItem = (MailItem) email;
+            entity.setAttachmentsName(mailItem.getAttachmentsName());
+            entity.setRawHeaders(mailItem.getRawHeaders());
         }
-        
-        MailItem mailItem = new MailItem(email.getTo(), email.getCc(), email.getBcc());
-        mailItem.setFrom(email.getFrom());
-        mailItem.setSubject(email.getSubject());
-        mailItem.setBody(email.getBody());
-        
-        return createMailItem(mailItem);
+        entity.save();
+        return uuid;
     }
 
-    /**
-     * Создает MailItem из JSON объекта для REST API
-     */
-    public MailItem createMailItemFromJson(JSONObject json) throws JSONException {
+    public String createMailItemFromJson(JSONObject json) throws JSONException {
         String to = json.optString("to", null);
         String cc = json.optString("cc", null);
         String bcc = json.optString("bcc", null);
-        
-        // Проверяем, что хотя бы одно поле получателя заполнено
+
         if ((to == null || to.isEmpty()) && (cc == null || cc.isEmpty()) && (bcc == null || bcc.isEmpty())) {
             throw new IllegalArgumentException("At least one recipient field (to, cc, bcc) must be provided");
         }
-        
+
         MailItem mailItem = new MailItem(to, cc, bcc);
         mailItem.setFrom(json.optString("from", null));
         mailItem.setSubject(json.optString("subject", null));
         mailItem.setBody(json.optString("body", null));
-        
         if (json.has("attachmentsName")) {
             mailItem.setAttachmentsName(json.getString("attachmentsName"));
         }
-        
+
         return createMailItem(mailItem);
     }
 
@@ -85,19 +78,18 @@ public class MailItemService {
     }
 
     public String getAllMailItemsAsJson() throws JSONException {
-        List<MailItem> items = getAllMailItems();
         JSONArray array = new JSONArray();
 
-        for (MailItem item : items) {
+        for (MailItemEntity entity : ao.find(MailItemEntity.class)) {
             JSONObject obj = new JSONObject();
-            obj.put("id", item.getId());
-            obj.put("from", item.getFrom());
-            obj.put("to", item.getTo());
-            obj.put("cc", item.getCc());
-            obj.put("bcc", item.getBcc());
-            obj.put("subject", item.getSubject());
-            obj.put("body", item.getBody());
-            obj.put("attachmentsName", item.getAttachmentsName());
+            obj.put("id", entity.getUuid());
+            obj.put("from", entity.getFrom());
+            obj.put("to", entity.getTo());
+            obj.put("cc", entity.getCc());
+            obj.put("bcc", entity.getBcc());
+            obj.put("subject", entity.getSubject());
+            obj.put("body", entity.getBody());
+            obj.put("attachmentsName", entity.getAttachmentsName());
             array.put(obj);
         }
 
@@ -119,24 +111,30 @@ public class MailItemService {
 
     public boolean loadTestData() {
         try {
-            // Получаем текущее количество записей для продолжения инкремента
-            int currentCount = getAllMailItems().size();
-            int startIndex = currentCount + 1;
-            
-            // Создаем 5 новых записей, продолжая нумерацию
+            int startIndex = ao.find(MailItemEntity.class).length + 1;
+
             for (int i = startIndex; i < startIndex + 5; i++) {
-                String from = "sender" + i + "@example.com";
-                String to = "recipient" + i + "@example.com";
-                String subject = "Тестовое письмо #" + i;
-                String body = "Это тестовое письмо номер " + i + ". Содержимое письма для проверки функциональности.";
-                
-                MailItem mailItem = new MailItem(to);
-                mailItem.setFrom(from);
-                mailItem.setSubject(subject);
-                mailItem.setBody(body);
-                createMailItem(mailItem);
+                MailItemEntity entity = ao.create(MailItemEntity.class);
+                entity.setUuid(UUID.randomUUID().toString());
+                entity.setFrom("sender" + i + "@example.com");
+                entity.setTo("recipient" + i + "@example.com");
+                entity.setSubject("Тестовое письмо #" + i);
+                entity.setBody(
+                    "<h2>Тестовое письмо №" + i + "</h2>" +
+                    "<p>Lorem ipsum dolor sit amet, <strong>consectetur adipiscing elit</strong>. " +
+                    "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>" +
+                    "<ul>" +
+                    "<li>Пункт первый — <em>важная информация</em></li>" +
+                    "<li>Пункт второй — <a href=\"#\">ссылка на ресурс</a></li>" +
+                    "<li>Пункт третий — обычный текст</li>" +
+                    "</ul>" +
+                    "<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris. " +
+                    "Duis aute irure dolor in <code>reprehenderit</code> in voluptate velit esse.</p>" +
+                    "<blockquote>Цитата: excepteur sint occaecat cupidatat non proident.</blockquote>"
+                );
+                entity.save();
             }
-            
+
             return true;
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при создании тестовых данных", e);

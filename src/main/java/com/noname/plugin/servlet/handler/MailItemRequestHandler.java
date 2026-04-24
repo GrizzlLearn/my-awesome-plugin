@@ -3,8 +3,8 @@ package com.noname.plugin.servlet.handler;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.noname.plugin.service.MailItemService;
-import com.noname.plugin.model.MailItem;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,7 +23,7 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * @date 11.08.2025 22:35
  */
 public class MailItemRequestHandler {
-    private static final Logger log = Logger.getLogger(MailItemRequestHandler.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
 
     private final MailItemService mailItemService;
 
@@ -39,8 +39,8 @@ public class MailItemRequestHandler {
 
         try {
             String jsonData = mailItemService.getAllMailItemsAsJson();
-            resp.getWriter().write(jsonData);
             resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().write(jsonData);
 
         } catch (JSONException e) {
             log.error("Error converting mail items to JSON", e);
@@ -57,14 +57,10 @@ public class MailItemRequestHandler {
         try {
             boolean deleted = mailItemService.deleteAllMailItemsSafe();
 
-            String jsonResponse = createSuccessResponse(
-                    deleted,
-                    deleted ? DELETE_SUCCESS_MESSAGE : DELETE_NOTHING_MESSAGE
-            );
-
+            JSONObject payload = new JSONObject()
+                .put("result", deleted);
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().write(jsonResponse);
-
+            resp.getWriter().write(ok(deleted ? DELETE_SUCCESS_MESSAGE : DELETE_NOTHING_MESSAGE, payload).toString());
         } catch (Exception e) {
             log.error("Error deleting all mail items", e);
             handleInternalError(resp, e);
@@ -74,20 +70,14 @@ public class MailItemRequestHandler {
     /**
      * Обрабатывает запрос на создание тестовых данных
      */
-    public void handleCreateTestDataRequest(HttpServletResponse resp) throws IOException {
+    public void handleCreateTestDataRequest(HttpServletResponse resp, boolean created) throws IOException {
         setJsonResponseHeaders(resp);
 
         try {
-            boolean created = mailItemService.loadTestData();
-
-            String jsonResponse = createSuccessResponse(
-                    created,
-                    created ? TEST_DATA_SUCCESS_MESSAGE : TEST_DATA_ERROR_MESSAGE
-            );
-
+            JSONObject payload = new JSONObject()
+                .put("result", created);
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().write(jsonResponse);
-
+            resp.getWriter().write(ok(created ? TEST_DATA_SUCCESS_MESSAGE : TEST_DATA_ERROR_MESSAGE, payload).toString());
         } catch (Exception e) {
             log.error("Error creating test data", e);
             handleInternalError(resp, e);
@@ -112,33 +102,25 @@ public class MailItemRequestHandler {
 
             if (jsonBuffer.length() == 0) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write(createErrorResponse("Request body is required"));
+                resp.getWriter().write(err("Request body is required").toString());
                 return;
             }
 
             // Парсим JSON
             JSONObject json = new JSONObject(jsonBuffer.toString());
             
-            // Создаем MailItem
-            MailItem createdItem = mailItemService.createMailItemFromJson(json);
+            String uuid = mailItemService.createMailItemFromJson(json);
 
-            // Возвращаем успешный ответ с ID созданного объекта
-            String jsonResponse = String.format(
-                    "{\"success\":true,\"message\":\"Email added successfully\",\"id\":\"%s\"}",
-                    escapeJsonString(createdItem.getId())
-            );
-
+            JSONObject payload = new JSONObject()
+                .put("id", uuid);
             resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().write(jsonResponse);
-
+            resp.getWriter().write(ok("Email added successfully", payload).toString());
         } catch (JSONException e) {
             log.error("Error parsing JSON request", e);
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write(createErrorResponse("Invalid JSON format: " + e.getMessage()));
+            handleInternalError(resp, e);
         } catch (IllegalArgumentException e) {
             log.error("Invalid email data", e);
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write(createErrorResponse(e.getMessage()));
+            handleInternalError(resp, e);
         } catch (Exception e) {
             log.error("Error adding email", e);
             handleInternalError(resp, e);
@@ -151,7 +133,7 @@ public class MailItemRequestHandler {
     public void handleNotFoundRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        resp.getWriter().write(createErrorResponse(ENDPOINT_NOT_FOUND_MESSAGE));
+        resp.getWriter().write(err(ENDPOINT_NOT_FOUND_MESSAGE).toString());
     }
 
     /**
@@ -160,7 +142,7 @@ public class MailItemRequestHandler {
     public void handleForbiddenRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
         resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        resp.getWriter().write(createErrorResponse(ACCESS_DENIED_MESSAGE));
+        resp.getWriter().write(err(ACCESS_DENIED_MESSAGE).toString());
     }
 
     /**
@@ -169,9 +151,8 @@ public class MailItemRequestHandler {
     public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
         setJsonResponseHeaders(resp);
         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-
         String errorMessage = e.getMessage() != null ? e.getMessage() : INTERNAL_ERROR_MESSAGE;
-        resp.getWriter().write(createErrorResponse(errorMessage));
+        resp.getWriter().write(err(errorMessage).toString());
     }
 
     // Helper methods
@@ -181,29 +162,35 @@ public class MailItemRequestHandler {
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
     }
 
-    private String createSuccessResponse(boolean result, String message) {
-        return String.format(
-                "{\"success\":true,\"result\":%s,\"message\":\"%s\"}",
-                result,
-                escapeJsonString(message)
-        );
-    }
-
-    private String createErrorResponse(String errorMessage) {
-        return String.format(
-                "{\"success\":false,\"error\":\"%s\"}",
-                escapeJsonString(errorMessage)
-        );
-    }
-
-    private String escapeJsonString(String input) {
-        if (input == null) {
-            return "";
+    private JSONObject ok(String message) {
+        try {
+            return new JSONObject().put("success", true).put("message", message);
+        } catch (JSONException e) {
+            throw new IllegalStateException("Failed to build JSON response", e);
         }
-        return input.replace("\"", "\\\"")
-                .replace("\\", "\\\\")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+    }
+
+    private JSONObject ok(String message, JSONObject extra) {
+        JSONObject o = ok(message);
+        if (extra != null) {
+            try {
+                java.util.Iterator<String> keys = extra.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    o.put(key, extra.get(key));
+                }
+            } catch (JSONException e) {
+                throw new IllegalStateException("Failed to merge JSON payload", e);
+            }
+        }
+        return o;
+    }
+
+    private JSONObject err(String message) {
+        try {
+            return new JSONObject().put("success", false).put("error", message);
+        } catch (JSONException e) {
+            throw new IllegalStateException("Failed to build JSON error response", e);
+        }
     }
 }

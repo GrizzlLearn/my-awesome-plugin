@@ -3,9 +3,6 @@ package com.noname.plugin.api;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.mail.Email;
 import com.noname.plugin.service.MailItemService;
-import com.noname.plugin.model.MailItem;
-import com.atlassian.jira.util.json.JSONObject;
-import com.atlassian.jira.util.json.JSONException;
 
 /**
  * Публичный API сервис для работы с MailItem из внешних скриптов (например, ScriptRunner)
@@ -50,8 +47,7 @@ public class MailItemApiService {
             throw new IllegalArgumentException("Email object cannot be null");
         }
         
-        MailItem createdItem = mailItemService.createMailItemFromEmail(email);
-        return createdItem.getId();
+        return mailItemService.createMailItem(email);
     }
     
     /**

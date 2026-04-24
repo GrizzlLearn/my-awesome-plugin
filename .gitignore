@@ -17,6 +17,7 @@ out/
 *.ipr
 *.iws
 .shelf
+.vscode/
 
 .settings/
 .classpath
@@ -142,3 +143,6 @@ $RECYCLE.BIN/
 
 # QODO
 .qodo
+
+# claude
+CLAUDE.md

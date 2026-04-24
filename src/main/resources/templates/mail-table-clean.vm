@@ -1,12 +1,12 @@
-## CSS подключается через WebResourceManager в сервлете
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="decorator" content="atl.admin">
+	<meta name="admin.active.section" content="admin_plugins_menu/my_awesome_plugin_config_section">
+	<meta name="admin.active.tab" content="web.item.mail.viewer.servlet">
 	<title>Mail Items Dashboard</title>
-	## Правильный путь к CSS через наш servlet
 	<link rel="stylesheet" type="text/css" href="css/mail-table.css">
 </head>
 <body>
@@ -22,13 +22,14 @@
 		<button id="delete-all-btn" class="delete-btn">
 			🗑️ Delete All Items
 		</button>
+		<a href="data" target="_blank" class="json-btn">📊 View JSON</a>
 	</div>
 	<div id="loading" class="loading">
 		<div class="spinner"></div>
 		<p>Loading mail items...</p>
 	</div>
 
-	<div id="content" style="display: none;">
+	<div id="mail-items-content" style="display: none;">
 		<div class="table-container">
 			<table class="mail-table">
 				<thead>
@@ -63,7 +64,7 @@
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
 		const loading = document.getElementById("loading");
-		const content = document.getElementById("content");
+		const content = document.getElementById("mail-items-content");
 		const emptyState = document.getElementById("empty-state");
 		const tableBody = document.getElementById("mail-items-body");
 		const stats = document.getElementById("stats");
@@ -78,7 +79,7 @@
 			// Очистить таблицу
 			tableBody.innerHTML = '';
 
-			fetch("/jira/plugins/servlet/mail-items/data")
+			fetch("$contextPath/plugins/servlet/mail-items/data")
 					.then(response => {
 						if (!response.ok) {
 							throw new Error(`HTTP error! status: ${response.status}`);
@@ -106,84 +107,75 @@
 
 		// Function to create test data
 		function createTestData() {
-			const createBtn = document.getElementById('create-test-data-btn');
-			const originalText = createBtn.textContent;
-
-			// Отключить кнопку и показать состояние загрузки
-			createBtn.disabled = true;
-			createBtn.textContent = '⏳ Creating...';
-
-			fetch("/jira/plugins/servlet/mail-items/create-test-data", {
+			fetch("$contextPath/plugins/servlet/mail-items/create-test-data", {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				}
+				headers: { 'Content-Type': 'application/json' }
 			})
-					.then(response => response.json())
-					.then(result => {
-						if (result.success) {
-							// Показать сообщение об успехе
-							alert('Test data created successfully!');
-							// Автоматически перезагрузить данные
-							loadData();
-						} else {
-							alert('Error: ' + (result.error || 'Failed to create test data'));
-						}
-					})
-					.catch(error => {
-						console.error('Error creating test data:', error);
-						alert('Failed to create test data. Please check the console for details.');
-					})
-					.finally(() => {
-						// Восстановить состояние кнопки
-						createBtn.disabled = false;
-						createBtn.textContent = originalText;
-					});
+				.then(response => response.json())
+				.then(result => {
+					if (result.success) {
+						loadData();
+					} else {
+						console.error('Create test data failed:', result.error);
+					}
+				})
+				.catch(error => {
+					console.error('Error creating test data:', error);
+				});
 		}
 
 		// Function to delete all mail items
+		let deleteConfirmTimer = null;
+
 		function deleteAllMailItems() {
-			if (!confirm('Are you sure you want to delete ALL mail items? This action cannot be undone!')) {
-				return;
-			}
-
 			const deleteBtn = document.getElementById('delete-all-btn');
-			const originalText = deleteBtn.textContent;
 
-			// Disable button and show loading state
+			if (deleteConfirmTimer) {
+				// Second click — confirmed, execute deletion
+				clearTimeout(deleteConfirmTimer);
+				deleteConfirmTimer = null;
+				resetDeleteBtn(deleteBtn);
+				performDeleteAll(deleteBtn);
+			} else {
+				// First click — ask for confirmation inline
+				deleteBtn.textContent = '⚠ Click again to confirm';
+				deleteBtn.classList.add('delete-btn-confirming');
+				deleteConfirmTimer = setTimeout(function () {
+					resetDeleteBtn(deleteBtn);
+				}, 3000);
+			}
+		}
+
+		function resetDeleteBtn(deleteBtn) {
+			clearTimeout(deleteConfirmTimer);
+			deleteConfirmTimer = null;
+			deleteBtn.textContent = '🗑️ Delete All Items';
+			deleteBtn.classList.remove('delete-btn-confirming');
+		}
+
+		function performDeleteAll(deleteBtn) {
 			deleteBtn.disabled = true;
 			deleteBtn.textContent = '⏳ Deleting...';
 
-			fetch("/jira/plugins/servlet/mail-items/delete-all", {
+			fetch("$contextPath/plugins/servlet/mail-items/delete-all", {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				}
+				headers: { 'Content-Type': 'application/json' }
 			})
-					.then(response => response.json())
-					.then(result => {
-						if (result.success) {
-							// Show success message
-							alert(result.message);
-
-							// Clear the table and show empty state
-							tableBody.innerHTML = '';
-							content.style.display = "none";
-							emptyState.style.display = "block";
-
-						} else {
-							alert('Error: ' + (result.error || 'Failed to delete items'));
-						}
-					})
-					.catch(error => {
-						console.error('Error deleting mail items:', error);
-						alert('Failed to delete mail items. Please check the console for details.');
-					})
-					.finally(() => {
-						// Restore button state
-						deleteBtn.disabled = false;
-						deleteBtn.textContent = originalText;
-					});
+				.then(response => response.json())
+				.then(result => {
+					if (result.success) {
+						loadData();
+					} else {
+						console.error('Delete failed:', result.error);
+					}
+				})
+				.catch(error => {
+					console.error('Error deleting mail items:', error);
+				})
+				.finally(() => {
+					deleteBtn.disabled = false;
+					deleteBtn.textContent = '🗑️ Delete All Items';
+				});
 		}
 
 		// Подключаем обработчики событий к кнопкам
@@ -244,9 +236,9 @@
 							</div>
 							
 							<div class="content-view active" data-view="preview">
-								<div class="detail-value" style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">${item.body || 'Пустое сообщение'}</div>
+								<div class="detail-value preview-content" style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem;"></div>
 							</div>
-							
+
 							<div class="content-view" data-view="formatted">
 								<div class="formatted-content"></div>
 								<div class="encoding-info">🎨 HTML-форматирование • Поддержка тегов и стилей</div>
@@ -260,10 +252,12 @@
 			
 			// Заполняем контент для разных режимов
 			const bodyText = item.body || 'Пустое сообщение';
-			const formattedContent = detailCell.querySelector('.formatted-content');
-			
-			// Заполняем форматированный контент (как HTML)
-			formattedContent.innerHTML = bodyText;
+
+			// Preview — сырой текст, теги видны как есть
+			detailCell.querySelector('.preview-content').textContent = bodyText;
+
+			// Formatted — рендеренный HTML
+			detailCell.querySelector('.formatted-content').innerHTML = bodyText;
 			
 			// Добавляем обработчики для кнопок режимов просмотра
 			const viewModeButtons = detailCell.querySelectorAll('.view-mode-btn');

@@ -35,14 +35,4 @@ public class MailItemMapper {
         return mailItem;
     }
 
-    public static void updateEntity(MailItemEntity entity, MailItem dto) {
-        entity.setUuid(dto.getId());
-        entity.setFrom(dto.getFrom());
-        entity.setTo(dto.getTo());
-        entity.setCc(dto.getCc());
-        entity.setBcc(dto.getBcc());
-        entity.setSubject(dto.getSubject());
-        entity.setBody(dto.getBody());
-        entity.setAttachmentsName(dto.getAttachmentsName());
-    }
 }

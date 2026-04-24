@@ -10,7 +10,8 @@ import com.noname.plugin.service.MailItemService;
 import com.noname.plugin.servlet.handler.MailItemRequestHandler;
 import com.noname.plugin.servlet.renderer.MailItemPageRenderer;
 import com.noname.plugin.servlet.util.TestDataInitializer;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -30,7 +31,7 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * @date 24.06.2025 22:54
  */
 public class MailViewerServlet extends HttpServlet {
-    private static final Logger log = Logger.getLogger(MailViewerServlet.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(MailViewerServlet.class);
 
     private final MailItemRequestHandler requestHandler;
     private final MailItemPageRenderer pageRenderer;
@@ -48,9 +49,6 @@ public class MailViewerServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            // Инициализация тестовых данных если необходимо
-            testDataInitializer.initializeIfEmpty();
-
             String requestURI = req.getRequestURI();
 
             // Redirect to proper URL format
@@ -60,8 +58,8 @@ public class MailViewerServlet extends HttpServlet {
             }
 
             // Route requests to appropriate handlers
-            if (requestURI.endsWith(MAIL_ITEMS_ROOT) || requestURI.endsWith(MAIL_ITEMS_BASE)) {
-                pageRenderer.renderMainPage(resp);
+            if (requestURI.endsWith(MAIL_ITEMS_ROOT)) {
+                pageRenderer.renderTablePage(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_DATA)) {
                 requestHandler.handleDataRequest(resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_TABLE)) {
@@ -92,7 +90,8 @@ public class MailViewerServlet extends HttpServlet {
             if (DELETE_ALL_ENDPOINT.equals(pathInfo)) {
                 requestHandler.handleDeleteAllRequest(resp);
             } else if (CREATE_TEST_DATA_ENDPOINT.equals(pathInfo)) {
-                requestHandler.handleCreateTestDataRequest(resp);
+                boolean created = testDataInitializer.forceCreateTestData();
+                requestHandler.handleCreateTestDataRequest(resp, created);
             } else if (ADD_EMAIL_ENDPOINT.equals(pathInfo)) {
                 requestHandler.handleAddEmailRequest(req, resp);
             } else {

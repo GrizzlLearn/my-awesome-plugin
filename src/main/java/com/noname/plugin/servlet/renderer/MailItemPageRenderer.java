@@ -2,7 +2,8 @@ package com.noname.plugin.servlet.renderer;
 
 import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.webresource.api.assembler.RequiredResources;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +23,7 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * @date 11.08.2025 22:35
  */
 public class MailItemPageRenderer {
-    private static final Logger log = Logger.getLogger(MailItemPageRenderer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(MailItemPageRenderer.class);
 
     private final PageBuilderService pageBuilderService;
 

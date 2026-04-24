@@ -35,21 +35,10 @@
     </web-resource>
 
     <!-- Mail Data Page -->
-
+    <ao key="ao-mail-item-module" name="Active Objects Module">
+        <entity>com.noname.plugin.ao.MailItemEntity</entity>
+    </ao>
     <!-- Servlet конфигурация -->
-    <servlet name="React UI Servlet" key="react-ui-servlet" class="com.noname.plugin.servlet.TestReactServlet">
-        <url-pattern>/react-ui</url-pattern>
-    </servlet>
-    <servlet name="Create Simple Issue"
-             key="csi-react-ui-servlet"
-             class="com.noname.plugin.servlet.CreateSimpleIssueServlet">
-        <url-pattern>/csi-react-ui</url-pattern>
-    </servlet>
-    <servlet name="Test Logger"
-             key="test-logger-servlet"
-             class="com.noname.plugin.servlet.TestLoggerServlet">
-        <url-pattern>/test-logger-servlet</url-pattern>
-    </servlet>
     <servlet name="Mail Viewer"
              key="mail-viewer-servlet"
              class="com.noname.plugin.servlet.MailViewerServlet">
@@ -64,24 +53,6 @@
                  weight="1000">
         <label key="plugin.name"/>
     </web-section>
-    <web-item key="web.item.create.simple.issue"
-              section="admin_plugins_menu/my_awesome_plugin_config_section"
-              weight="10">
-        <label key="create.simple.issue"/>
-        <link>/plugins/servlet/csi-react-ui</link>
-    </web-item>
-    <web-item key="web.item.create.unique.issue"
-              section="admin_plugins_menu/my_awesome_plugin_config_section"
-              weight="20">
-        <label key="create.unique.issue"/>
-        <link>/plugins/servlet/react-ui</link>
-    </web-item>
-    <web-item key="web.item.test.logger.servlet"
-              section="admin_plugins_menu/my_awesome_plugin_config_section"
-              weight="30">
-        <label key="test.logger.servlet"/>
-        <link>/plugins/servlet/test-logger-servlet</link>
-    </web-item>
     <web-item key="web.item.mail.viewer.servlet"
               section="admin_plugins_menu/my_awesome_plugin_config_section"
               weight="40">
@@ -90,12 +61,6 @@
     </web-item>
 
     <!-- Active Objects конфигурация -->
-    <ao key="ao-simple-issue-creation-log-module"
-        name="Active Objects Module">
-        <description>The module configuring the Divide Issue template Active Objects</description>
-        <entity>com.noname.plugin.ao.SimpleIssueCreationLog</entity>
-        <entity>com.noname.plugin.ao.MailItemEntity</entity>
-    </ao>
 
     <!-- Component конфигурация -->
 

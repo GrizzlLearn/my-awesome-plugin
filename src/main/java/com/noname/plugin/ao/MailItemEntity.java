@@ -2,10 +2,8 @@ package com.noname.plugin.ao;
 
 import net.java.ao.Entity;
 import net.java.ao.Preload;
+import net.java.ao.schema.StringLength;
 import net.java.ao.schema.Table;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * @author dl
@@ -33,12 +31,14 @@ public interface MailItemEntity extends Entity {
     String getSubject();
     void setSubject(String subject);
 
+    @StringLength(StringLength.UNLIMITED)
     String getBody();
     void setBody(String body);
 
     String getAttachmentsName();
     void setAttachmentsName(String attachmentsName);
 
+    @StringLength(StringLength.UNLIMITED)
     String getRawHeaders();
     void setRawHeaders(String rawHeaders);
 }
