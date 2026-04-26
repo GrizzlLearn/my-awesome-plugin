@@ -17,22 +17,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Обрабатывает HTTP-запросы для операций с почтовыми элементами.
- * Отделяет логику обработки запросов от маршрутизации сервлета.
- * @author dl
- * @date 11.08.2025 22:35
+ * Обработчик HTTP-запросов для операций с письмами.
+ * Содержит по одному методу на каждую операцию — читает запрос, вызывает сервис, формирует JSON-ответ.
+ * Маршрутизация (какой метод вызвать) находится в {@link com.noname.plugin.servlet.MailViewerServlet}.
  */
 public class MailItemRequestHandler {
+
     private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
 
     private final MailItemService mailItemService;
 
+    /**
+     * @param mailItemService сервис для работы с письмами
+     */
     public MailItemRequestHandler(MailItemService mailItemService) {
         this.mailItemService = checkNotNull(mailItemService);
     }
 
     /**
-     * Обрабатывает запросы к конечной точке данных JSON
+     * Отдаёт все письма в виде JSON-массива.
+     * Соответствует GET {@code /mail-items/data}.
+     *
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleDataRequest(HttpServletResponse resp) throws IOException {
         resp.setContentType(JSON_CONTENT_TYPE);
@@ -41,7 +48,6 @@ public class MailItemRequestHandler {
             String jsonData = mailItemService.getAllMailItemsAsJson();
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(jsonData);
-
         } catch (JSONException e) {
             log.error("Error converting mail items to JSON", e);
             handleInternalError(resp, e);
@@ -49,16 +55,18 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает запрос на удаление всех почтовых элементов
+     * Удаляет все письма из базы данных.
+     * Соответствует POST {@code /delete-all}.
+     *
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleDeleteAllRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
 
         try {
             boolean deleted = mailItemService.deleteAllMailItemsSafe();
-
-            JSONObject payload = new JSONObject()
-                .put("result", deleted);
+            JSONObject payload = new JSONObject().put("result", deleted);
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(ok(deleted ? DELETE_SUCCESS_MESSAGE : DELETE_NOTHING_MESSAGE, payload).toString());
         } catch (Exception e) {
@@ -68,14 +76,18 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает запрос на создание тестовых данных
+     * Возвращает результат создания тестовых данных.
+     * Соответствует POST {@code /create-test-data}. Сама генерация данных выполнена до вызова этого метода.
+     *
+     * @param resp    HTTP-ответ
+     * @param created {@code true}, если данные были успешно созданы
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleCreateTestDataRequest(HttpServletResponse resp, boolean created) throws IOException {
         setJsonResponseHeaders(resp);
 
         try {
-            JSONObject payload = new JSONObject()
-                .put("result", created);
+            JSONObject payload = new JSONObject().put("result", created);
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(ok(created ? TEST_DATA_SUCCESS_MESSAGE : TEST_DATA_ERROR_MESSAGE, payload).toString());
         } catch (Exception e) {
@@ -85,13 +97,19 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает запрос на добавление email объекта через API
+     * Добавляет письмо, переданное в теле запроса в формате JSON.
+     * Соответствует POST {@code /add-email}.
+     * Ожидаемые поля JSON: {@code from}, {@code to}, {@code cc}, {@code bcc}, {@code subject}, {@code body}.
+     * Возвращает UUID созданной записи в поле {@code id}.
+     *
+     * @param req  HTTP-запрос с JSON-телом
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка чтения запроса или записи ответа
      */
     public void handleAddEmailRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
 
         try {
-            // Читаем JSON из тела запроса
             StringBuilder jsonBuffer = new StringBuilder();
             String line;
             try (BufferedReader reader = req.getReader()) {
@@ -106,13 +124,10 @@ public class MailItemRequestHandler {
                 return;
             }
 
-            // Парсим JSON
             JSONObject json = new JSONObject(jsonBuffer.toString());
-            
             String uuid = mailItemService.createMailItemFromJson(json);
 
-            JSONObject payload = new JSONObject()
-                .put("id", uuid);
+            JSONObject payload = new JSONObject().put("id", uuid);
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().write(ok("Email added successfully", payload).toString());
         } catch (JSONException e) {
@@ -128,7 +143,10 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает запросы к несуществующим конечным точкам
+     * Отвечает 404 для неизвестных POST-эндпоинтов.
+     *
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleNotFoundRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -137,7 +155,10 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает запросы с запрещенным доступом
+     * Отвечает 403 для пользователей без прав администратора.
+     *
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleForbiddenRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -146,7 +167,11 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Обрабатывает внутренние ошибки сервера
+     * Отвечает 500 с сообщением из исключения.
+     *
+     * @param resp HTTP-ответ
+     * @param e    исключение, ставшее причиной ошибки
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
         setJsonResponseHeaders(resp);
@@ -155,7 +180,7 @@ public class MailItemRequestHandler {
         resp.getWriter().write(err(errorMessage).toString());
     }
 
-    // Helper methods
+    // ===== Вспомогательные методы =====
 
     private void setJsonResponseHeaders(HttpServletResponse resp) {
         resp.setContentType(MediaType.APPLICATION_JSON);

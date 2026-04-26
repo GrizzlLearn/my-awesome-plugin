@@ -3,23 +3,30 @@ package com.noname.plugin.mapper;
 import com.noname.plugin.ao.MailItemEntity;
 import com.noname.plugin.model.MailItem;
 
-
 /**
- * @author dl
- * @date 24.06.2025 22:19
+ * Маппер между {@link MailItemEntity} (слой БД) и {@link MailItem} (доменная модель).
+ * Все методы статические — класс не хранит состояния.
  */
 public class MailItemMapper {
+
+    /**
+     * Преобразует сущность в полную доменную модель со всеми полями, включая вложения.
+     * <p>
+     * Если все поля получателя (to, cc, bcc) пустые — подставляет заглушку {@code unknown@example.com},
+     * так как конструктор {@link MailItem} требует хотя бы одного получателя.
+     *
+     * @param entity сущность из базы данных
+     * @return {@link MailItem} со всеми заполненными полями
+     */
     public static MailItem toDtoFull(MailItemEntity entity) {
-        // Проверяем, что хотя бы одно поле получателя заполнено
         String to = entity.getTo();
         String cc = entity.getCc();
         String bcc = entity.getBcc();
-        
-        // Если все поля получателей пусты, используем fallback
+
         if ((to == null || to.isEmpty()) && (cc == null || cc.isEmpty()) && (bcc == null || bcc.isEmpty())) {
             to = "unknown@example.com";
         }
-        
+
         MailItem mailItem = new MailItem(to, cc, bcc, entity.getAttachmentsName());
         mailItem.setFrom(entity.getFrom());
         mailItem.setSubject(entity.getSubject());
@@ -27,6 +34,13 @@ public class MailItemMapper {
         return mailItem;
     }
 
+    /**
+     * Преобразует сущность в облегчённую доменную модель без cc, bcc и вложений.
+     * Используется там, где эти поля заведомо не нужны, чтобы не тащить лишние данные.
+     *
+     * @param entity сущность из базы данных
+     * @return {@link MailItem} только с полями from, to, subject, body
+     */
     public static MailItem toDtoMinimal(MailItemEntity entity) {
         MailItem mailItem = new MailItem(entity.getTo());
         mailItem.setFrom(entity.getFrom());
@@ -34,5 +48,4 @@ public class MailItemMapper {
         mailItem.setBody(entity.getBody());
         return mailItem;
     }
-
 }

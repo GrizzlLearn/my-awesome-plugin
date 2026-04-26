@@ -9,6 +9,7 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.noname.plugin.ao.MailItemEntity;
 import com.noname.plugin.mapper.MailItemMapper;
 import com.noname.plugin.model.MailItem;
+import net.java.ao.Query;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -18,11 +19,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * @author dl
- * @date 24.06.2025 22:25
+ * Сервис для работы с письмами: создание, чтение, удаление, загрузка тестовых данных.
+ * Единственная точка доступа к таблице {@code MAIL_ITEM_TABLE} через Active Objects.
  */
 @Component
 public class MailItemService {
+
     @ComponentImport
     private final ActiveObjects ao;
 
@@ -31,6 +33,14 @@ public class MailItemService {
         this.ao = ao;
     }
 
+    /**
+     * Сохраняет письмо в базе данных и возвращает его UUID.
+     * Если передан {@link MailItem}, дополнительно сохраняет вложения и сырые заголовки.
+     *
+     * @param email письмо для сохранения
+     * @return UUID созданной записи
+     * @throws IllegalArgumentException если {@code email} равен {@code null}
+     */
     public String createMailItem(Email email) {
         if (email == null) throw new IllegalArgumentException("Email cannot be null");
         String uuid = UUID.randomUUID().toString();
@@ -51,6 +61,16 @@ public class MailItemService {
         return uuid;
     }
 
+    /**
+     * Создаёт письмо из JSON-объекта (используется HTTP-эндпоинтом {@code /add-email}).
+     * Ожидаемые поля: {@code from}, {@code to}, {@code cc}, {@code bcc}, {@code subject},
+     * {@code body}, {@code attachmentsName}. Хотя бы одно из полей получателя (to/cc/bcc) обязательно.
+     *
+     * @param json JSON-объект с полями письма
+     * @return UUID созданной записи
+     * @throws JSONException            если JSON некорректен
+     * @throws IllegalArgumentException если все поля получателя пусты
+     */
     public String createMailItemFromJson(JSONObject json) throws JSONException {
         String to = json.optString("to", null);
         String cc = json.optString("cc", null);
@@ -71,12 +91,36 @@ public class MailItemService {
         return createMailItem(mailItem);
     }
 
+    /**
+     * Возвращает письмо по UUID.
+     *
+     * @param uuid идентификатор письма
+     * @return {@link MailItem} или {@code null}, если письмо не найдено
+     */
+    public MailItem getMailItemById(String uuid) {
+        MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
+        if (results.length == 0) return null;
+        return MailItemMapper.toDtoFull(results[0]);
+    }
+
+    /**
+     * Возвращает все письма из базы данных в виде доменных объектов.
+     *
+     * @return список всех писем; пустой список, если записей нет
+     */
     public List<MailItem> getAllMailItems() {
         return Arrays.stream(ao.find(MailItemEntity.class))
                 .map(MailItemMapper::toDtoFull)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Возвращает все письма в виде JSON-строки (используется HTTP-эндпоинтом {@code /data}).
+     * Читает данные напрямую из сущностей, минуя маппер, чтобы не создавать лишних объектов.
+     *
+     * @return JSON-массив со всеми письмами
+     * @throws JSONException если сборка JSON не удалась
+     */
     public String getAllMailItemsAsJson() throws JSONException {
         JSONArray array = new JSONArray();
 
@@ -96,10 +140,16 @@ public class MailItemService {
         return array.toString();
     }
 
+    /**
+     * Удаляет все письма из базы данных.
+     *
+     * @return {@code true}, если хотя бы одна запись была удалена; {@code false}, если таблица была пуста
+     * @throws RuntimeException если удаление завершилось с ошибкой
+     */
     public boolean deleteAllMailItemsSafe() {
         try {
             MailItemEntity[] entities = ao.find(MailItemEntity.class);
-            if (entities.length > 0 ) {
+            if (entities.length > 0) {
                 ao.delete(entities);
                 return true;
             }
@@ -109,6 +159,13 @@ public class MailItemService {
         }
     }
 
+    /**
+     * Добавляет 5 тестовых писем с HTML-содержимым.
+     * Нумерация начинается с {@code (текущее_количество + 1)}, чтобы не конфликтовать с существующими записями.
+     *
+     * @return {@code true} при успехе
+     * @throws RuntimeException если создание записей завершилось с ошибкой
+     */
     public boolean loadTestData() {
         try {
             int startIndex = ao.find(MailItemEntity.class).length + 1;
@@ -140,6 +197,4 @@ public class MailItemService {
             throw new RuntimeException("Ошибка при создании тестовых данных", e);
         }
     }
-
-
 }

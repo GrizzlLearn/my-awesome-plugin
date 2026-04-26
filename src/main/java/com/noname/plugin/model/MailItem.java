@@ -4,11 +4,13 @@ import com.atlassian.jira.mail.Email;
 import lombok.*;
 
 /**
- * Расширенная модель email для плагина
- * Наследуется от стандартной JIRA Email модели
- *
- * @author dl
- * @date 24.06.2025 22:02
+ * Доменная модель письма плагина.
+ * <p>
+ * Расширяет стандартный JIRA-класс {@link Email}, добавляя уникальный идентификатор,
+ * имена вложений и сырые заголовки. Поля from, to, cc, bcc, subject, body наследуются от {@link Email}.
+ * <p>
+ * {@code id} генерируется при создании объекта и не может быть изменён — он совпадает
+ * с {@code uuid}, под которым письмо хранится в базе данных.
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
@@ -16,30 +18,25 @@ import lombok.*;
 @Setter
 public class MailItem extends Email {
 
-    /**
-     * Уникальный идентификатор письма
-     */
+    /** Уникальный идентификатор письма. Генерируется один раз при создании объекта. */
     private final String id = java.util.UUID.randomUUID().toString();
 
-    /**
-     * Имена вложений (дополнительное поле)
-     */
+    /** Имена вложений через запятую. {@code null}, если вложений нет. */
     private String attachmentsName;
 
-    /**
-     * Полные email заголовки для отображения в raw-режиме
-     */
+    /** Полные заголовки письма в формате RFC 2822. {@code null}, если письмо создано вручную. */
     private String rawHeaders;
 
     /**
-     * Конструктор с обязательным получателем
+     * @param to адрес основного получателя
      */
     public MailItem(String to) {
         super(to);
     }
 
     /**
-     * Конструктор с получателем и дополнительными полями
+     * @param to              адрес основного получателя
+     * @param attachmentsName имена вложений через запятую
      */
     public MailItem(String to, String attachmentsName) {
         super(to);
@@ -47,14 +44,19 @@ public class MailItem extends Email {
     }
 
     /**
-     * Конструктор с полным набором адресов
+     * @param to  адрес основного получателя
+     * @param cc  адреса получателей в копии
+     * @param bcc адреса получателей в скрытой копии
      */
     public MailItem(String to, String cc, String bcc) {
         super(to, cc, bcc);
     }
 
     /**
-     * Конструктор с полным набором адресов и дополнительными полями
+     * @param to              адрес основного получателя
+     * @param cc              адреса получателей в копии
+     * @param bcc             адреса получателей в скрытой копии
+     * @param attachmentsName имена вложений через запятую
      */
     public MailItem(String to, String cc, String bcc, String attachmentsName) {
         super(to, cc, bcc);
@@ -62,14 +64,15 @@ public class MailItem extends Email {
     }
 
     /**
-     * Конструктор с полным набором полей включая заголовки
+     * @param to              адрес основного получателя
+     * @param cc              адреса получателей в копии
+     * @param bcc             адреса получателей в скрытой копии
+     * @param attachmentsName имена вложений через запятую
+     * @param rawHeaders      сырые заголовки письма в формате RFC 2822
      */
     public MailItem(String to, String cc, String bcc, String attachmentsName, String rawHeaders) {
         super(to, cc, bcc);
         this.attachmentsName = attachmentsName;
         this.rawHeaders = rawHeaders;
     }
-
-    // Все остальные свойства (from, to, cc, bcc, subject, body)
-    // автоматически наследуются от Email класса!
 }

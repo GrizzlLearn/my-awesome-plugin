@@ -24,13 +24,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Основной сервлет для функциональности просмотра почтовых элементов.
- * Делегирует обязанности специализированным обработчикам и рендерам.
- *
- * @author dl
- * @date 24.06.2025 22:54
+ * Точка входа HTTP для просмотрщика писем плагина.
+ * <p>
+ * Маршрутизирует GET-запросы к {@link MailItemPageRenderer} (HTML/CSS) и
+ * к {@link MailItemRequestHandler} (JSON-данные), а POST-запросы — к {@link MailItemRequestHandler}.
+ * Сам сервлет не содержит бизнес-логики: только маршрутизация и проверка авторизации.
+ * <p>
+ * Доступные маршруты:
+ * <ul>
+ *   <li>GET  {@code /mail-items/}       — таблица писем (HTML)</li>
+ *   <li>GET  {@code /mail-items/data}   — все письма в JSON</li>
+ *   <li>GET  {@code /mail-items/table}  — таблица писем (HTML, альтернативный путь)</li>
+ *   <li>POST {@code /delete-all}        — удалить все письма</li>
+ *   <li>POST {@code /create-test-data}  — создать тестовые данные</li>
+ *   <li>POST {@code /add-email}         — добавить письмо через JSON</li>
+ * </ul>
  */
 public class MailViewerServlet extends HttpServlet {
+
     private static final Logger log = LoggerFactory.getLogger(MailViewerServlet.class);
 
     private final MailItemRequestHandler requestHandler;
@@ -46,18 +57,23 @@ public class MailViewerServlet extends HttpServlet {
         this.testDataInitializer = new TestDataInitializer(checkedMailItemService);
     }
 
+    /**
+     * Маршрутизирует GET-запросы по URI.
+     * Запрос на базовый URL без слеша перенаправляется на URL со слешем.
+     *
+     * @throws ServletException если возникла ошибка сервлета
+     * @throws IOException      если возникла ошибка записи ответа
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
             String requestURI = req.getRequestURI();
 
-            // Redirect to proper URL format
             if (requestURI.endsWith(MAIL_ITEMS_BASE)) {
                 resp.sendRedirect(requestURI + "/");
                 return;
             }
 
-            // Route requests to appropriate handlers
             if (requestURI.endsWith(MAIL_ITEMS_ROOT)) {
                 pageRenderer.renderTablePage(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_DATA)) {
@@ -76,10 +92,15 @@ public class MailViewerServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Маршрутизирует POST-запросы по pathInfo.
+     * Все POST-операции требуют прав системного администратора JIRA.
+     *
+     * @throws IOException если возникла ошибка записи ответа
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            // Check authentication and authorization
             if (!isUserAuthorized()) {
                 handleUnauthorizedRequest(resp);
                 return;
@@ -104,17 +125,26 @@ public class MailViewerServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Проверяет, является ли текущий пользователь системным администратором JIRA.
+     *
+     * @return {@code true}, если пользователь вошёл в систему и имеет права системного администратора
+     */
     private boolean isUserAuthorized() {
         UserManager userManager = ComponentAccessor.getOSGiComponentInstanceOfType(UserManager.class);
         UserKey userKey = userManager.getRemoteUserKey();
         ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-
         return user != null && userManager.isSystemAdmin(userKey);
     }
 
+    /**
+     * Обрабатывает запросы от неавторизованных пользователей.
+     * Незалогиненных редиректит на страницу входа; залогиненных без прав — возвращает 403.
+     *
+     * @throws IOException если возникла ошибка записи ответа
+     */
     private void handleUnauthorizedRequest(HttpServletResponse resp) throws IOException {
         ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-
         if (user == null) {
             resp.sendRedirect(JIRA_LOGIN_URL);
         } else {

@@ -1,6 +1,6 @@
 /* Mail Table Styles */
 .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -8,7 +8,7 @@
 
 .header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     padding: 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -16,14 +16,99 @@
 }
 
 .header h1 {
-    margin: 0 0 10px 0;
-    font-size: 2.5rem;
+    margin: 0 0 8px 0;
+    font-size: 2rem;
 }
 
 .header p {
     margin: 0;
     opacity: 0.9;
 }
+
+/* ===== ACTIONS ===== */
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.create-btn {
+    background-color: #10b981;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.create-btn:hover:not(:disabled) {
+    background-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.create-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.5); }
+.create-btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+.create-btn:active:not(:disabled) { background-color: #047857; transform: translateY(0); }
+
+.delete-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.delete-btn:hover:not(:disabled) {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.delete-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(239,68,68,0.5); }
+.delete-btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
+.delete-btn:active:not(:disabled) { background-color: #b91c1c; transform: translateY(0); }
+
+.delete-btn-confirming {
+    background-color: #b91c1c;
+    animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from { opacity: 1; }
+    to   { opacity: 0.7; }
+}
+
+.json-btn {
+    display: inline-flex;
+    align-items: center;
+    background-color: #0052cc;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.json-btn:hover { background-color: #0747a6; color: white; text-decoration: none; }
+
+/* ===== LOADING ===== */
 
 .loading {
     text-align: center;
@@ -41,14 +126,16 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
+    0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* ===== TABLE ===== */
 
 .table-container {
     background: white;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     overflow: hidden;
     margin-bottom: 20px;
 }
@@ -56,68 +143,229 @@
 .mail-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .mail-table th {
     background: #f8f9fa;
-    padding: 15px;
+    padding: 13px 16px;
     text-align: left;
     font-weight: 600;
     color: #495057;
     border-bottom: 2px solid #dee2e6;
+    font-size: 0.875rem;
 }
 
-.mail-table td {
-    padding: 15px;
-    border-bottom: 1px solid #dee2e6;
-    vertical-align: top;
+.col-from    { width: 220px; }
+.col-subject { width: auto; }
+
+/* ===== MAIL ROW (list item) ===== */
+
+.mail-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
-.mail-table tr:hover {
-    background-color: #f8f9fa;
+.mail-row:hover {
+    background-color: #f1f5f9;
+}
+
+.mail-row td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+    overflow: hidden;
 }
 
 .from-cell {
-    font-weight: 500;
-    color: #495057;
-    max-width: 200px;
-}
-
-.to-cell {
-    color: #6c757d;
-    max-width: 200px;
-}
-
-.subject-cell {
-    font-weight: 500;
-    max-width: 300px;
-}
-
-.body-cell {
-    max-width: 400px;
-    word-wrap: break-word;
-}
-
-.truncate {
+    font-weight: 600;
+    color: #111827;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.expand-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    margin-top: 5px;
+.subject-col {
+    vertical-align: top;
+    padding-top: 13px !important;
 }
 
-.expand-btn:hover {
-    background: #5a67d8;
+.mail-subject {
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
+.mail-preview {
+    font-size: 0.82rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* expand arrow */
+.expand-indicator {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    margin-right: 8px;
+    color: #667eea;
+    font-size: 0.75rem;
+    vertical-align: middle;
+}
+
+.expand-indicator.expanded {
+    transform: rotate(90deg);
+}
+
+/* ===== DETAIL ROW — accordion via max-height ===== */
+
+.detail-row > td {
+    padding: 0 !important;
+    border-bottom: 0 !important;
+    overflow: hidden;
+}
+
+.detail-row.expanded > td {
+    border-bottom: 3px solid #667eea !important;
+}
+
+.detail-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.detail-row.expanded .detail-wrapper {
+    max-height: 2000px;
+}
+
+/* ===== EMAIL VIEW ===== */
+
+.email-view {
+    padding: 24px 24px 28px;
+    background: #fafbfc;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Header: From / To / CC / BCC */
+.email-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 14px;
+    margin-bottom: 0;
+}
+
+.email-field {
+    display: flex;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.email-field-label {
+    width: 75px;
+    flex-shrink: 0;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding-top: 1px;
+}
+
+.email-field-value {
+    color: #1f2937;
+    word-break: break-all;
+}
+
+/* Subject */
+.email-subject-line {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    padding: 16px 0 16px;
+    border-bottom: 1px solid #e5e7eb;
+    line-height: 1.3;
+}
+
+/* Body */
+.email-body-container {
+    padding-top: 20px;
+}
+
+.email-body-html {
+    min-height: 40px;
+    line-height: 1.7;
+    color: #374151;
+    word-wrap: break-word;
+}
+
+.email-body-html h1,
+.email-body-html h2,
+.email-body-html h3 { margin-top: 0; margin-bottom: 10px; }
+.email-body-html p  { margin-bottom: 10px; }
+.email-body-html img { max-width: 100%; height: auto; }
+.email-body-html a  { color: #667eea; }
+.email-body-html a:hover { text-decoration: underline; }
+
+.email-body-raw {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.82rem;
+    background: #1f2937;
+    color: #e5e7eb;
+    padding: 16px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+    border: 1px solid #374151;
+    max-height: 450px;
+    overflow-y: auto;
+    margin: 0;
+}
+
+/* "Показать исходник" button */
+.source-btn {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 6px 14px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+}
+
+.source-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.source-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.3);
+}
+
+.source-btn.source-btn-active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.source-btn.source-btn-active:hover {
+    background: #5a67d8;
+    border-color: #5a67d8;
+}
+
+/* ===== MISC ===== */
 
 .stats {
     text-align: center;
@@ -143,369 +391,12 @@
     color: #495057;
 }
 
-/* ===== СТИЛИ ДЛЯ КНОПОК И ДЕЙСТВИЙ ===== */
+/* ===== RESPONSIVE ===== */
 
-/* Контейнер для кнопок действий */
-.header .actions {
-    margin-top: 1rem;
-}
+@media (max-width: 640px) {
+    .col-from { width: 140px; }
 
-/* ===== СТИЛИ ДЛЯ КНОПКИ СОЗДАНИЯ ТЕСТОВЫХ ДАННЫХ ===== */
+    .email-field-label { width: 60px; }
 
-/* Основные стили кнопки создания тестовых данных */
-.create-btn {
-    background-color: #10b981;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
-
-/* Эффекты при наведении на кнопку создания (если не отключена) */
-.create-btn:hover:not(:disabled) {
-    background-color: #059669;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
-}
-
-/* Стили фокуса для доступности (навигация с клавиатуры) */
-.create-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.5);
-}
-
-/* Отключенное состояние кнопки создания */
-.create-btn:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Активное состояние (при нажатии) */
-.create-btn:active:not(:disabled) {
-    background-color: #047857;
-    transform: translateY(0);
-}
-
-/* ===== СТИЛИ ДЛЯ КНОПКИ УДАЛЕНИЯ ===== */
-
-/* Основные стили кнопки удаления */
-.delete-btn {
-    background-color: #ef4444;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: background-color 0.2s ease-in-out;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
-
-/* Состояние hover для кнопки */
-.delete-btn:hover:not(:disabled) {
-    background-color: #dc2626;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
-}
-
-/* Состояние focus для доступности */
-.delete-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
-}
-
-/* Отключенное состояние кнопки */
-.delete-btn:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Активное состояние (при нажатии) */
-.delete-btn:active:not(:disabled) {
-    background-color: #b91c1c;
-    transform: translateY(0);
-}
-
-.delete-btn-confirming {
-    background-color: #b91c1c;
-    animation: pulse 0.6s ease-in-out infinite alternate;
-}
-
-@keyframes pulse {
-    from { opacity: 1; }
-    to   { opacity: 0.7; }
-}
-
-.json-btn {
-    display: inline-flex;
-    align-items: center;
-    background-color: #0052cc;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background-color 0.2s ease-in-out;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
-
-.json-btn:hover {
-    background-color: #0747a6;
-    color: white;
-    text-decoration: none;
-}
-
-/* ===== СТИЛИ ДЛЯ РАСКРЫВАЮЩИХСЯ СТРОК ===== */
-
-/* Основная строка таблицы */
-.mail-table tr {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.mail-table tr:hover {
-    background-color: #f1f5f9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Индикатор раскрытия */
-.expand-indicator {
-    display: inline-block;
-    transition: transform 0.3s ease;
-    margin-right: 8px;
-    font-weight: bold;
-    color: #667eea;
-}
-
-.expand-indicator.expanded {
-    transform: rotate(90deg);
-}
-
-/* Детальная строка */
-.detail-row {
-    display: none;
-    background-color: #f8fafc;
-    border-top: none !important;
-}
-
-.detail-row.expanded {
-    display: table-row;
-    animation: slideDown 0.3s ease-out;
-}
-
-.detail-row td {
-    padding: 20px 15px;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-/* Контент детальной информации */
-.detail-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    font-size: 0.9rem;
-}
-
-.detail-section {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.detail-section h4 {
-    margin: 0 0 10px 0;
-    color: #374151;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-}
-
-.detail-field {
-    margin-bottom: 8px;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.detail-label {
-    font-weight: 500;
-    color: #6b7280;
-    min-width: 80px;
-    margin-right: 10px;
-}
-
-.detail-value {
-    color: #374151;
-    word-break: break-all;
-}
-
-.detail-value.email {
-    color: #667eea;
-}
-
-.detail-value.uuid {
-    font-family: monospace;
-    font-size: 0.8rem;
-    background: #f3f4f6;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
-/* Анимация появления */
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Кнопки режимов просмотра письма */
-.view-mode-buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-}
-
-.view-mode-btn {
-    background-color: #667eea;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.view-mode-btn:hover {
-    background-color: #5a67d8;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
-}
-
-.view-mode-btn.active {
-    background-color: #4c51bf;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
-}
-
-.view-mode-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5);
-}
-
-/* Контейнеры для разных режимов просмотра */
-.content-view {
-    display: none;
-}
-
-.content-view.active {
-    display: block;
-}
-
-.raw-content {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.85rem;
-    background: #1f2937;
-    color: #e5e7eb;
-    padding: 15px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 300px;
-    overflow-y: auto;
-    line-height: 1.4;
-    border: 1px solid #374151;
-}
-
-.formatted-content {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    max-height: 300px;
-    overflow-y: auto;
-    line-height: 1.6;
-}
-
-.formatted-content h1, .formatted-content h2, .formatted-content h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.formatted-content p {
-    margin-bottom: 10px;
-}
-
-.formatted-content img {
-    max-width: 100%;
-    height: auto;
-}
-
-.formatted-content a {
-    color: #667eea;
-    text-decoration: none;
-}
-
-.formatted-content a:hover {
-    text-decoration: underline;
-}
-
-/* Информация о кодировке */
-.encoding-info {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 8px;
-    padding: 4px 8px;
-    background: #f9fafb;
-    border-radius: 4px;
-    border-left: 3px solid #d1d5db;
-}
-
-/* Стили для мобильных устройств */
-@media (max-width: 768px) {
-    .detail-content {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .detail-field {
-        flex-direction: column;
-    }
-    
-    .detail-label {
-        min-width: auto;
-        margin-right: 0;
-        margin-bottom: 4px;
-    }
-    
-    .view-mode-buttons {
-        justify-content: center;
-    }
-    
-    .view-mode-btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
+    .source-btn { display: block; margin-top: 14px; text-align: center; }
 }

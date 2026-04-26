@@ -17,33 +17,41 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Отрисовывает HTML-страницы и обслуживает статические ресурсы для просмотрщика почтовых элементов.
- * Обрабатывает обработку шаблонов и обслуживание CSS.
- * @author dl
- * @date 11.08.2025 22:35
+ * Отвечает за генерацию HTML-ответов и отдачу статических ресурсов (CSS).
+ * <p>
+ * Шаблоны загружаются из classpath ресурсов плагина. Переменные вида {@code $contextPath}
+ * заменяются вручную (без полноценного Velocity-движка), что достаточно для текущего набора шаблонов.
+ * CSS-файлы отдаются напрямую из classpath, минуя стандартный механизм WebResource,
+ * чтобы они были доступны без полной JIRA-декорации страницы.
  */
 public class MailItemPageRenderer {
+
     private static final Logger log = LoggerFactory.getLogger(MailItemPageRenderer.class);
 
     private final PageBuilderService pageBuilderService;
 
+    /**
+     * @param pageBuilderService сервис для подключения WebResource-ресурсов к странице
+     */
     public MailItemPageRenderer(PageBuilderService pageBuilderService) {
         this.pageBuilderService = checkNotNull(pageBuilderService);
     }
 
     /**
-     * Отрисовывает главную страницу навигации
+     * Отдаёт навигационную страницу плагина.
+     * Загружает шаблон из classpath; если шаблон не найден — генерирует HTML программно.
+     *
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void renderMainPage(HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
 
-        // Try to load template from resources first
         InputStream htmlStream = getClass().getClassLoader().getResourceAsStream(MAIN_TEMPLATE_PATH);
 
         if (htmlStream != null) {
             try {
-                String content = readStreamToString(htmlStream);
-                resp.getWriter().write(content);
+                resp.getWriter().write(readStreamToString(htmlStream));
             } catch (IOException e) {
                 log.warn("Error reading main template, falling back to generated HTML", e);
                 resp.getWriter().write(generateNavigationHtml());
@@ -55,23 +63,25 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Отрисовывает страницу таблицы с интеграцией WebResourceManager
+     * Отдаёт страницу таблицы писем.
+     * Подключает CSS через {@link PageBuilderService}, загружает {@code .vm}-шаблон и заменяет переменные.
+     *
+     * @param req  HTTP-запрос (нужен для получения contextPath и baseUrl)
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void renderTablePage(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
 
         try {
-            // Include CSS resources through PageBuilderService
             RequiredResources requiredResources = pageBuilderService.assembler().resources();
             requiredResources.requireWebResource(MAIL_TABLE_RESOURCES);
 
-            // Load and process template
             InputStream vmStream = getClass().getClassLoader().getResourceAsStream(TABLE_TEMPLATE_PATH);
 
             if (vmStream != null) {
                 String vmContent = readStreamToString(vmStream);
-                String processedContent = processVelocityTemplate(vmContent, req);
-                resp.getWriter().write(processedContent);
+                resp.getWriter().write(processVelocityTemplate(vmContent, req));
             } else {
                 log.error("Table template not found: " + TABLE_TEMPLATE_PATH);
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, TEMPLATE_NOT_FOUND_MESSAGE);
@@ -84,7 +94,11 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Обслуживает CSS-файлы из classpath
+     * Отдаёт CSS-файл из classpath по URI запроса.
+     *
+     * @param req  HTTP-запрос (URI используется для определения нужного файла)
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
      */
     public void serveCssFile(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURI = req.getRequestURI();
@@ -101,8 +115,7 @@ public class MailItemPageRenderer {
 
         if (cssStream != null) {
             try {
-                String cssContent = readStreamToString(cssStream);
-                resp.getWriter().write(cssContent);
+                resp.getWriter().write(readStreamToString(cssStream));
             } catch (IOException e) {
                 log.error("Error reading CSS file: " + cssPath, e);
                 resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error reading CSS file");
@@ -113,23 +126,24 @@ public class MailItemPageRenderer {
         }
     }
 
-    // Helper methods
+    // ===== Вспомогательные методы =====
 
     private String readStreamToString(InputStream inputStream) throws IOException {
         StringBuilder result = new StringBuilder();
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 result.append(line).append(System.lineSeparator());
             }
         }
-
         return result.toString();
     }
 
+    /**
+     * Выполняет простую подстановку переменных в шаблоне.
+     * Полноценный Velocity-движок не используется — текущих переменных достаточно для шаблона.
+     */
     private String processVelocityTemplate(String vmContent, HttpServletRequest req) {
-        // Simple template variable replacement (could be enhanced with proper Velocity engine)
         return vmContent
                 .replace("$webResourceManager.requireResource(\"com.noname.plugin:mail-table-resources\")",
                         "<!-- CSS подключен через WebResourceManager в сервлете -->")
@@ -142,6 +156,11 @@ public class MailItemPageRenderer {
                 req.getServerPort() + req.getContextPath();
     }
 
+    /**
+     * Сопоставляет URI запроса с путём к CSS-файлу в classpath.
+     *
+     * @return путь в classpath или {@code null}, если URI не соответствует ни одному CSS-файлу
+     */
     private String extractCssPath(String requestURI) {
         if (requestURI.endsWith(CSS_MAIN_PATH)) {
             return CSS_MAIN_RESOURCE;
@@ -172,15 +191,9 @@ public class MailItemPageRenderer {
                 "    <div class='container'>" +
                 "        <h1>📧 Mail Items Viewer</h1>" +
                 "        <p class='description'>Выберите, как вы хотите просмотреть данные о письмах:</p>" +
-                "        " +
-                "        <a href='data' class='nav-button'>" +
-                "            <span class='icon'>📊</span>Данные (JSON)" +
-                "        </a>" +
+                "        <a href='data' class='nav-button'><span class='icon'>📊</span>Данные (JSON)</a>" +
                 "        <p class='description'>Получить все письма в формате JSON для API или программного использования</p>" +
-                "        " +
-                "        <a href='table' class='nav-button'>" +
-                "            <span class='icon'>📋</span>Таблица (HTML)" +
-                "        </a>" +
+                "        <a href='table' class='nav-button'><span class='icon'>📋</span>Таблица (HTML)</a>" +
                 "        <p class='description'>Просмотреть письма в удобной табличной форме в браузере</p>" +
                 "    </div>" +
                 "</body>" +

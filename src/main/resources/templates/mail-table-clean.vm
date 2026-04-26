@@ -34,11 +34,8 @@
 			<table class="mail-table">
 				<thead>
 				<tr>
-					<th>ID</th>
-					<th>From</th>
-					<th>To</th>
-					<th>Subject</th>
-					<th>Body</th>
+					<th class="col-from">От</th>
+					<th class="col-subject">Тема</th>
 				</tr>
 				</thead>
 				<tbody id="mail-items-body">
@@ -69,262 +66,219 @@
 		const tableBody = document.getElementById("mail-items-body");
 		const stats = document.getElementById("stats");
 
-		// Function to reload data
+		function escapeHtml(text) {
+			if (!text) return '';
+			return String(text)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+		}
+
+		function stripHtml(html) {
+			if (!html) return '';
+			return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+		}
+
+		function formatHtml(html) {
+			if (!html) return '';
+			const INDENT = '  ';
+			const VOID_TAGS = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i;
+			const tokens = html.match(/(<[^>]+>|[^<]+)/g) || [];
+			let depth = 0;
+			const lines = [];
+			tokens.forEach(function(token) {
+				token = token.trim();
+				if (!token) return;
+				if (token.startsWith('</')) {
+					depth = Math.max(0, depth - 1);
+					lines.push(INDENT.repeat(depth) + token);
+				} else if (token.startsWith('<')) {
+					const tagName = (token.match(/^<(\w+)/) || [])[1] || '';
+					const isSelfClosing = token.endsWith('/>') || VOID_TAGS.test(tagName);
+					lines.push(INDENT.repeat(depth) + token);
+					if (!isSelfClosing) depth++;
+				} else {
+					const text = token.trim();
+					if (text) lines.push(INDENT.repeat(depth) + text);
+				}
+			});
+			return lines.join('\n');
+		}
+
 		function loadData() {
-			// Показать загрузку
 			loading.style.display = "block";
 			content.style.display = "none";
 			emptyState.style.display = "none";
-
-			// Очистить таблицу
 			tableBody.innerHTML = '';
 
 			fetch("$contextPath/plugins/servlet/mail-items/data")
-					.then(response => {
-						if (!response.ok) {
-							throw new Error(`HTTP error! status: ${response.status}`);
-						}
-						const contentType = response.headers.get("content-type");
-						if (!contentType || !contentType.includes("application/json")) {
-							throw new Error("Response is not JSON");
-						}
-						return response.json();
-					})
-					.then(items => {
-						processMailItems(items);
-					})
-					.catch(error => {
-						console.error('Error fetching mail items:', error);
-						loading.innerHTML =
-								'<div style="color: #ef4444;">' +
-								'<p><strong>Error loading mail items</strong></p>' +
-								'<p style="font-size: 0.9rem; margin-top: 8px;">' +
-								(error.message || 'Please check your connection and try again.') +
-								'</p>' +
-								'</div>';
-					});
+				.then(response => {
+					if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
+					const ct = response.headers.get("content-type");
+					if (!ct || !ct.includes("application/json")) throw new Error("Response is not JSON");
+					return response.json();
+				})
+				.then(items => processMailItems(items))
+				.catch(error => {
+					console.error('Error fetching mail items:', error);
+					loading.innerHTML =
+						'<div style="color: #ef4444;">' +
+						'<p><strong>Error loading mail items</strong></p>' +
+						'<p style="font-size: 0.9rem; margin-top: 8px;">' +
+						(error.message || 'Please check your connection and try again.') +
+						'</p></div>';
+				});
 		}
 
-		// Function to create test data
 		function createTestData() {
 			fetch("$contextPath/plugins/servlet/mail-items/create-test-data", {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
 			})
-				.then(response => response.json())
-				.then(result => {
-					if (result.success) {
-						loadData();
-					} else {
-						console.error('Create test data failed:', result.error);
-					}
-				})
-				.catch(error => {
-					console.error('Error creating test data:', error);
-				});
+				.then(r => r.json())
+				.then(result => { if (result.success) loadData(); })
+				.catch(e => console.error('Error creating test data:', e));
 		}
 
-		// Function to delete all mail items
 		let deleteConfirmTimer = null;
 
 		function deleteAllMailItems() {
 			const deleteBtn = document.getElementById('delete-all-btn');
-
 			if (deleteConfirmTimer) {
-				// Second click — confirmed, execute deletion
 				clearTimeout(deleteConfirmTimer);
 				deleteConfirmTimer = null;
 				resetDeleteBtn(deleteBtn);
 				performDeleteAll(deleteBtn);
 			} else {
-				// First click — ask for confirmation inline
 				deleteBtn.textContent = '⚠ Click again to confirm';
 				deleteBtn.classList.add('delete-btn-confirming');
-				deleteConfirmTimer = setTimeout(function () {
-					resetDeleteBtn(deleteBtn);
-				}, 3000);
+				deleteConfirmTimer = setTimeout(function () { resetDeleteBtn(deleteBtn); }, 3000);
 			}
 		}
 
-		function resetDeleteBtn(deleteBtn) {
+		function resetDeleteBtn(btn) {
 			clearTimeout(deleteConfirmTimer);
 			deleteConfirmTimer = null;
-			deleteBtn.textContent = '🗑️ Delete All Items';
-			deleteBtn.classList.remove('delete-btn-confirming');
+			btn.textContent = '🗑️ Delete All Items';
+			btn.classList.remove('delete-btn-confirming');
 		}
 
 		function performDeleteAll(deleteBtn) {
 			deleteBtn.disabled = true;
 			deleteBtn.textContent = '⏳ Deleting...';
-
 			fetch("$contextPath/plugins/servlet/mail-items/delete-all", {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
 			})
-				.then(response => response.json())
-				.then(result => {
-					if (result.success) {
-						loadData();
-					} else {
-						console.error('Delete failed:', result.error);
-					}
-				})
-				.catch(error => {
-					console.error('Error deleting mail items:', error);
-				})
+				.then(r => r.json())
+				.then(result => { if (result.success) loadData(); })
+				.catch(e => console.error('Error deleting:', e))
 				.finally(() => {
 					deleteBtn.disabled = false;
 					deleteBtn.textContent = '🗑️ Delete All Items';
 				});
 		}
 
-		// Подключаем обработчики событий к кнопкам
-		const createBtn = document.getElementById('create-test-data-btn');
-		if (createBtn) {
-			createBtn.addEventListener('click', createTestData);
-		}
+		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
+		document.getElementById('delete-all-btn').addEventListener('click', deleteAllMailItems);
 
-		const deleteBtn = document.getElementById('delete-all-btn');
-		if (deleteBtn) {
-			deleteBtn.addEventListener('click', deleteAllMailItems);
-		}
-
-		// Function to create detail row
 		function createDetailRow(item) {
 			const detailRow = document.createElement("tr");
 			detailRow.className = "detail-row";
-			
+
 			const detailCell = document.createElement("td");
-			detailCell.colSpan = 5;
-			
-			detailCell.innerHTML = `
-				<div class="detail-content">
-					<div class="detail-section">
-						<h4>📧 Основная информация</h4>
-						<div class="detail-field">
-							<span class="detail-label">ID:</span>
-							<span class="detail-value uuid">${item.id || 'Не указан'}</span>
-						</div>
-						<div class="detail-field">
-							<span class="detail-label">От:</span>
-							<span class="detail-value email">${item.from || 'Не указан'}</span>
-						</div>
-						<div class="detail-field">
-							<span class="detail-label">Кому:</span>
-							<span class="detail-value email">${Array.isArray(item.to) ? item.to.join(', ') : (item.to || 'Не указан')}</span>
-						</div>
-						<div class="detail-field">
-							<span class="detail-label">Копия:</span>
-							<span class="detail-value email">${Array.isArray(item.cc) ? item.cc.join(', ') : (item.cc || 'Не указана')}</span>
-						</div>
-						<div class="detail-field">
-							<span class="detail-label">Скрытая:</span>
-							<span class="detail-value email">${Array.isArray(item.bcc) ? item.bcc.join(', ') : (item.bcc || 'Не указана')}</span>
-						</div>
-					</div>
-					<div class="detail-section">
-						<h4>📝 Содержание письма</h4>
-						<div class="detail-field">
-							<span class="detail-label">Тема:</span>
-							<span class="detail-value">${item.subject || 'Без темы'}</span>
-						</div>
-						<div class="detail-field" style="flex-direction: column; align-items: flex-start;">
-							<span class="detail-label">Текст:</span>
-							<div class="view-mode-buttons">
-								<button class="view-mode-btn active" data-mode="preview">📄 Превью</button>
-								<button class="view-mode-btn" data-mode="formatted">🎨 Форматированный</button>
-							</div>
-							
-							<div class="content-view active" data-view="preview">
-								<div class="detail-value preview-content" style="margin-top: 8px; padding: 10px; background: #f9fafb; border-radius: 6px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem;"></div>
-							</div>
+			detailCell.colSpan = 2;
 
-							<div class="content-view" data-view="formatted">
-								<div class="formatted-content"></div>
-								<div class="encoding-info">🎨 HTML-форматирование • Поддержка тегов и стилей</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			`;
-			
-			detailRow.appendChild(detailCell);
-			
-			// Заполняем контент для разных режимов
-			const bodyText = item.body || 'Пустое сообщение';
+			const wrapper = document.createElement('div');
+			wrapper.className = 'detail-wrapper';
 
-			// Preview — сырой текст, теги видны как есть
-			detailCell.querySelector('.preview-content').textContent = bodyText;
+			const emailView = document.createElement('div');
+			emailView.className = 'email-view';
 
-			// Formatted — рендеренный HTML
-			detailCell.querySelector('.formatted-content').innerHTML = bodyText;
-			
-			// Добавляем обработчики для кнопок режимов просмотра
-			const viewModeButtons = detailCell.querySelectorAll('.view-mode-btn');
-			const contentViews = detailCell.querySelectorAll('.content-view');
-			
-			viewModeButtons.forEach(button => {
-				button.addEventListener('click', function(e) {
-					e.stopPropagation(); // Предотвращаем закрытие строки при клике на кнопку
-					
-					const mode = this.getAttribute('data-mode');
-					
-					// Убираем активный класс со всех кнопок
-					viewModeButtons.forEach(btn => btn.classList.remove('active'));
-					// Добавляем активный класс на текущую кнопку
-					this.classList.add('active');
-					
-					// Скрываем все контентные области
-					contentViews.forEach(view => view.classList.remove('active'));
-					// Показываем нужную контентную область
-					const targetView = detailCell.querySelector(`[data-view="${mode}"]`);
-					if (targetView) {
-						targetView.classList.add('active');
-					}
-				});
+			// --- Header: From / To / CC / BCC ---
+			const header = document.createElement('div');
+			header.className = 'email-header';
+
+			function addField(label, value) {
+				const normalized = Array.isArray(value) ? value.join(', ') : value;
+				if (!normalized) return;
+				const field = document.createElement('div');
+				field.className = 'email-field';
+				field.innerHTML =
+					'<span class="email-field-label">' + escapeHtml(label) + '</span>' +
+					'<span class="email-field-value">' + escapeHtml(normalized) + '</span>';
+				header.appendChild(field);
+			}
+
+			addField('От:', item.from);
+			addField('Кому:', item.to);
+			addField('Копия:', item.cc);
+			addField('Скрытая:', item.bcc);
+
+			// --- Subject ---
+			const subjectLine = document.createElement('div');
+			subjectLine.className = 'email-subject-line';
+			subjectLine.textContent = item.subject || 'Без темы';
+
+			// --- Body ---
+			const bodyContainer = document.createElement('div');
+			bodyContainer.className = 'email-body-container';
+
+			const htmlView = document.createElement('div');
+			htmlView.className = 'email-body-html';
+			htmlView.innerHTML = item.body || '<em style="color:#9ca3af">Пустое сообщение</em>';
+
+			const rawView = document.createElement('pre');
+			rawView.className = 'email-body-raw';
+			rawView.style.display = 'none';
+			rawView.textContent = formatHtml(item.body) || 'Пустое сообщение';
+
+			const sourceBtn = document.createElement('button');
+			sourceBtn.className = 'source-btn';
+			sourceBtn.textContent = 'Показать исходник';
+
+			let showingRaw = false;
+			function crossFade(hideEl, showEl) {
+				hideEl.style.transition = 'opacity 0.18s ease';
+				hideEl.style.opacity = '0';
+				setTimeout(function () {
+					hideEl.style.display = 'none';
+					hideEl.style.transition = '';
+					hideEl.style.opacity = '';
+					showEl.style.opacity = '0';
+					showEl.style.display = '';
+					showEl.offsetHeight; // reflow
+					showEl.style.transition = 'opacity 0.18s ease';
+					showEl.style.opacity = '1';
+					setTimeout(function () {
+						showEl.style.transition = '';
+						showEl.style.opacity = '';
+					}, 180);
+				}, 180);
+			}
+			sourceBtn.addEventListener('click', function (e) {
+				e.stopPropagation();
+				showingRaw = !showingRaw;
+				crossFade(showingRaw ? htmlView : rawView, showingRaw ? rawView : htmlView);
+				sourceBtn.textContent = showingRaw ? 'Показать письмо' : 'Показать исходник';
+				sourceBtn.classList.toggle('source-btn-active', showingRaw);
 			});
-			
+
+			bodyContainer.appendChild(htmlView);
+			bodyContainer.appendChild(rawView);
+			bodyContainer.appendChild(sourceBtn);
+
+			emailView.appendChild(header);
+			emailView.appendChild(subjectLine);
+			emailView.appendChild(bodyContainer);
+			wrapper.appendChild(emailView);
+			detailCell.appendChild(wrapper);
+			detailRow.appendChild(detailCell);
+
 			return detailRow;
 		}
 
-		// Function to create expandable content
-		function createExpandableContent(text, maxLength = 100) {
-			if (text.length <= maxLength) {
-				return text;
-			}
-
-			const truncated = text.substring(0, maxLength) + "...";
-			const fullText = text;
-
-			const container = document.createElement('div');
-			const textSpan = document.createElement('span');
-			const button = document.createElement('button');
-
-			textSpan.textContent = truncated;
-			button.textContent = 'Show more';
-			button.className = 'expand-btn';
-
-			let isExpanded = false;
-			button.addEventListener('click', function() {
-				if (isExpanded) {
-					textSpan.textContent = truncated;
-					button.textContent = 'Show more';
-					isExpanded = false;
-				} else {
-					textSpan.textContent = fullText;
-					button.textContent = 'Show less';
-					isExpanded = true;
-				}
-			});
-
-			container.appendChild(textSpan);
-			container.appendChild(document.createElement('br'));
-			container.appendChild(button);
-
-			return container;
-		}
-
-		// Function to process mail items
 		function processMailItems(items) {
 			loading.style.display = "none";
 
@@ -336,54 +290,52 @@
 			content.style.display = "block";
 
 			items.forEach(item => {
+				// --- Main row ---
 				const row = document.createElement("tr");
+				row.className = "mail-row";
 
-				const idCell = document.createElement("td");
-				idCell.className = "id-cell";
-				idCell.innerHTML = '<span class="expand-indicator">▶</span>' + (item.id ? item.id.substring(0, 8) + '...' : 'Unknown');
-
+				// From cell
 				const fromCell = document.createElement("td");
 				fromCell.className = "from-cell";
-				fromCell.textContent = item.from || 'Unknown';
 
-				const toCell = document.createElement("td");
-				toCell.className = "to-cell";
-				toCell.textContent = Array.isArray(item.to) ? item.to.join(", ") : (item.to || 'Unknown');
+				const indicator = document.createElement('span');
+				indicator.className = 'expand-indicator';
+				indicator.innerHTML = '&#9656;'; // ▶
 
+				const fromText = document.createElement('span');
+				fromText.textContent = item.from || 'Неизвестный отправитель';
+
+				fromCell.appendChild(indicator);
+				fromCell.appendChild(fromText);
+
+				// Subject + preview cell
 				const subjectCell = document.createElement("td");
-				subjectCell.className = "subject-cell truncate";
-				subjectCell.textContent = item.subject || 'No subject';
-				subjectCell.title = item.subject || 'No subject';
+				subjectCell.className = "subject-col";
 
-				const bodyCell = document.createElement("td");
-				bodyCell.className = "body-cell";
-				const bodyContent = item.body || 'No content';
-				if (bodyContent.length > 100) {
-					bodyCell.appendChild(createExpandableContent(bodyContent, 100));
-				} else {
-					bodyCell.textContent = bodyContent;
-				}
-				row.appendChild(idCell);
+				const subjectDiv = document.createElement('div');
+				subjectDiv.className = 'mail-subject';
+				subjectDiv.textContent = item.subject || 'Без темы';
+
+				const previewDiv = document.createElement('div');
+				previewDiv.className = 'mail-preview';
+				const bodyPreview = stripHtml(item.body || '');
+				previewDiv.textContent = bodyPreview.substring(0, 120) || 'Нет содержимого';
+
+				subjectCell.appendChild(subjectDiv);
+				subjectCell.appendChild(previewDiv);
+
 				row.appendChild(fromCell);
-				row.appendChild(toCell);
 				row.appendChild(subjectCell);
-				row.appendChild(bodyCell);
 
-				// Добавляем обработчик клика для раскрытия строки
-				row.addEventListener('click', function() {
-					const detailRow = row.nextElementSibling;
-					const indicator = row.querySelector('.expand-indicator');
-					
-					if (detailRow && detailRow.classList.contains('detail-row')) {
-						// Переключаем состояние раскрытия
-						detailRow.classList.toggle('expanded');
-						indicator.classList.toggle('expanded');
-					}
+				// --- Detail row ---
+				const detailRow = createDetailRow(item);
+
+				row.addEventListener('click', function () {
+					const expanding = !detailRow.classList.contains('expanded');
+					detailRow.classList.toggle('expanded');
+					indicator.classList.toggle('expanded', expanding);
 				});
 
-				// Создаем детальную строку
-				const detailRow = createDetailRow(item);
-				
 				tableBody.appendChild(row);
 				tableBody.appendChild(detailRow);
 			});
@@ -391,7 +343,6 @@
 			stats.textContent = 'Showing ' + items.length + ' mail item' + (items.length !== 1 ? 's' : '');
 		}
 
-		// Загрузить данные при загрузке страницы
 		loadData();
 	});
 </script>
