@@ -38,31 +38,6 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Отдаёт навигационную страницу плагина.
-     * Загружает шаблон из classpath; если шаблон не найден — генерирует HTML программно.
-     *
-     * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
-     */
-    public void renderMainPage(HttpServletResponse resp) throws IOException {
-        resp.setContentType(HTML_CONTENT_TYPE);
-
-        InputStream htmlStream = getClass().getClassLoader().getResourceAsStream(MAIN_TEMPLATE_PATH);
-
-        if (htmlStream != null) {
-            try {
-                resp.getWriter().write(readStreamToString(htmlStream));
-            } catch (IOException e) {
-                log.warn("Error reading main template, falling back to generated HTML", e);
-                resp.getWriter().write(generateNavigationHtml());
-            }
-        } else {
-            log.debug("Main template not found, using generated HTML");
-            resp.getWriter().write(generateNavigationHtml());
-        }
-    }
-
-    /**
      * Отдаёт страницу таблицы писем.
      * Подключает CSS через {@link PageBuilderService}, загружает {@code .vm}-шаблон и заменяет переменные.
      *
@@ -170,33 +145,4 @@ public class MailItemPageRenderer {
         return null;
     }
 
-    private String generateNavigationHtml() {
-        return "<!DOCTYPE html>" +
-                "<html>" +
-                "<head>" +
-                "    <title>Mail Items Viewer</title>" +
-                "    <meta charset='UTF-8'>" +
-                "    <meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
-                "    <style>" +
-                "        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }" +
-                "        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }" +
-                "        h1 { color: #333; text-align: center; margin-bottom: 30px; font-size: 28px; }" +
-                "        .nav-button { display: block; width: 100%; padding: 15px; margin: 15px 0; background-color: #0052cc; color: white; text-decoration: none; text-align: center; border-radius: 5px; font-size: 16px; transition: all 0.3s; border: none; cursor: pointer; }" +
-                "        .nav-button:hover { background-color: #003d99; transform: translateY(-1px); }" +
-                "        .description { color: #666; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }" +
-                "        .icon { margin-right: 8px; }" +
-                "    </style>" +
-                "</head>" +
-                "<body>" +
-                "    <div class='container'>" +
-                "        <h1>📧 Mail Items Viewer</h1>" +
-                "        <p class='description'>Выберите, как вы хотите просмотреть данные о письмах:</p>" +
-                "        <a href='data' class='nav-button'><span class='icon'>📊</span>Данные (JSON)</a>" +
-                "        <p class='description'>Получить все письма в формате JSON для API или программного использования</p>" +
-                "        <a href='table' class='nav-button'><span class='icon'>📋</span>Таблица (HTML)</a>" +
-                "        <p class='description'>Просмотреть письма в удобной табличной форме в браузере</p>" +
-                "    </div>" +
-                "</body>" +
-                "</html>";
-    }
 }

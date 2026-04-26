@@ -38,7 +38,6 @@ public final class MailViewerConstants {
 
     // --- Пути к ресурсам в classpath ---
 
-    public static final String MAIN_TEMPLATE_PATH = "templates/mail-main.html";
     public static final String TABLE_TEMPLATE_PATH = "templates/mail-table-clean.vm";
     public static final String CSS_MAIN_RESOURCE  = "css/mail-main.css";
     public static final String CSS_TABLE_RESOURCE = "css/mail-table.css";

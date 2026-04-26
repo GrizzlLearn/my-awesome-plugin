@@ -65,7 +65,7 @@ public class MailViewerServlet extends HttpServlet {
      * @throws IOException      если возникла ошибка записи ответа
      */
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String requestURI = req.getRequestURI();
 

@@ -34,18 +34,4 @@ public class MailItemMapper {
         return mailItem;
     }
 
-    /**
-     * Преобразует сущность в облегчённую доменную модель без cc, bcc и вложений.
-     * Используется там, где эти поля заведомо не нужны, чтобы не тащить лишние данные.
-     *
-     * @param entity сущность из базы данных
-     * @return {@link MailItem} только с полями from, to, subject, body
-     */
-    public static MailItem toDtoMinimal(MailItemEntity entity) {
-        MailItem mailItem = new MailItem(entity.getTo());
-        mailItem.setFrom(entity.getFrom());
-        mailItem.setSubject(entity.getSubject());
-        mailItem.setBody(entity.getBody());
-        return mailItem;
-    }
 }
