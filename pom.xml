@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>my-awesome-plugin</artifactId>
-    <version>0.9.2.0</version>
+    <version>0.9.3.0</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
@@ -104,6 +104,12 @@
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.11.0</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Uncomment to use TestKit in your project. Details at https://bitbucket.org/atlassian/jira-testkit -->
         <!-- You can read more about TestKit at https://developer.atlassian.com/display/JIRADEV/Plugin+Tutorial+-+Smarter+integration+testing+with+TestKit -->
@@ -161,12 +167,14 @@
 
                         <!-- Add package import here -->
                         <Import-Package>
+                            org.jspecify.annotations;resolution:="optional",
                             org.springframework.osgi.*;resolution:="optional",
                             org.eclipse.gemini.blueprint.*;resolution:="optional",
                             *
                         </Import-Package>
 
                         <!-- Ensure plugin is spring powered -->
+                        <Embed-Dependency>jsoup</Embed-Dependency>
                         <Spring-Context>*</Spring-Context>
                     </instructions>
 

@@ -189,6 +189,16 @@ public class MailItemApiService {
      * @return {@link MailItem}
      * @throws IllegalArgumentException если письмо не найдено
      */
+    /**
+     * Создаёт 5 тестовых писем с HTML-содержимым.
+     * Используется для быстрого наполнения базы при ручном тестировании.
+     *
+     * @return {@code true} при успехе
+     */
+    public boolean loadTestData() {
+        return mailItemService.loadTestData();
+    }
+
     private MailItem getOrThrow(String id) {
         MailItem item = mailItemService.getMailItemById(id);
         if (item == null) throw new IllegalArgumentException("Email not found: " + id);
