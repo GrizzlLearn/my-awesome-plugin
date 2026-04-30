@@ -63,10 +63,15 @@ public final class MailViewerConstants {
 
     // --- Сообщения об успехе ---
 
-    public static final String DELETE_SUCCESS_MESSAGE    = "All mail items deleted successfully";
-    public static final String DELETE_NOTHING_MESSAGE    = "No mail items to delete";
-    public static final String TEST_DATA_SUCCESS_MESSAGE = "Test data created successfully";
-    public static final String TEST_DATA_ERROR_MESSAGE   = "Failed to create test data";
+    public static final String DELETE_SUCCESS_MESSAGE      = "All mail items deleted successfully";
+    public static final String DELETE_NOTHING_MESSAGE      = "No mail items to delete";
+    public static final String DELETE_BY_ID_SUCCESS_MESSAGE = "Mail item deleted successfully";
+    public static final String TEST_DATA_SUCCESS_MESSAGE   = "Test data created successfully";
+    public static final String TEST_DATA_ERROR_MESSAGE     = "Failed to create test data";
+
+    // --- Сообщения об отсутствии данных ---
+
+    public static final String EMAIL_NOT_FOUND_MESSAGE = "Mail item not found";
 
     // --- JIRA URL ---
 

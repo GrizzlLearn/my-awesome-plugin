@@ -6,16 +6,16 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
-    <artifactId>my-awesome-plugin</artifactId>
-    <version>0.9.3.0</version>
+    <artifactId>mail-catcher</artifactId>
+    <version>0.9.4.0</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
         <url>http://developer.atlassian.com/</url>
     </organization>
 
-    <name>my-awesome-plugin</name>
-    <description>This is the com.noname.plugin:my-awesome-plugin plugin for Atlassian JIRA.</description>
+    <name>Mail Catcher</name>
+    <description>JIRA plugin for capturing and inspecting outgoing emails. Provides a UI dashboard and a public API for automated tests via ScriptRunner.</description>
     <packaging>atlassian-plugin</packaging>
 
     <dependencies>
@@ -127,7 +127,7 @@
         <plugins>
             <!--<plugin>
                 <groupId>com.noname.plugin</groupId>
-                <artifactId>my-awesome-plugin</artifactId>
+                <artifactId>mail-catcher</artifactId>
                 <version>0.1</version>
                 <configuration>
                     &lt;!&ndash; LOGS &ndash;&gt;

@@ -35,9 +35,10 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  *   <li>GET  {@code /mail-items/}       — таблица писем (HTML)</li>
  *   <li>GET  {@code /mail-items/data}   — все письма в JSON</li>
  *   <li>GET  {@code /mail-items/table}  — таблица писем (HTML, альтернативный путь)</li>
- *   <li>POST {@code /delete-all}        — удалить все письма</li>
- *   <li>POST {@code /create-test-data}  — создать тестовые данные</li>
- *   <li>POST {@code /add-email}         — добавить письмо через JSON</li>
+ *   <li>POST   {@code /delete-all}        — удалить все письма</li>
+ *   <li>POST   {@code /create-test-data}  — создать тестовые данные</li>
+ *   <li>POST   {@code /add-email}         — добавить письмо через JSON</li>
+ *   <li>DELETE {@code /mail-items/{uuid}} — удалить одно письмо по ID</li>
  * </ul>
  */
 public class MailViewerServlet extends HttpServlet {
@@ -77,7 +78,7 @@ public class MailViewerServlet extends HttpServlet {
             if (requestURI.endsWith(MAIL_ITEMS_ROOT)) {
                 pageRenderer.renderTablePage(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_DATA)) {
-                requestHandler.handleDataRequest(resp);
+                requestHandler.handleDataRequest(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_TABLE)) {
                 pageRenderer.renderTablePage(req, resp);
             } else if (requestURI.contains("/css/")) {
@@ -121,6 +122,35 @@ public class MailViewerServlet extends HttpServlet {
 
         } catch (Exception e) {
             log.error("Error handling POST request: " + req.getRequestURI(), e);
+            requestHandler.handleInternalError(resp, e);
+        }
+    }
+
+    /**
+     * Маршрутизирует DELETE-запросы для удаления письма по UUID.
+     * Путь: DELETE {@code /mail-items/{uuid}}.
+     * Требует прав системного администратора JIRA.
+     *
+     * @throws IOException если возникла ошибка записи ответа
+     */
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            if (!isUserAuthorized()) {
+                handleUnauthorizedRequest(resp);
+                return;
+            }
+
+            String pathInfo = req.getPathInfo();
+            if (pathInfo != null && pathInfo.length() > 1) {
+                String uuid = pathInfo.substring(1);
+                requestHandler.handleDeleteByIdRequest(uuid, resp);
+            } else {
+                requestHandler.handleNotFoundRequest(resp);
+            }
+
+        } catch (Exception e) {
+            log.error("Error handling DELETE request: " + req.getRequestURI(), e);
             requestHandler.handleInternalError(resp, e);
         }
     }

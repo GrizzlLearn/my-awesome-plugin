@@ -8,7 +8,7 @@
     </plugin-info>
 
     <!-- add our i18n resource -->
-    <resource type="i18n" name="i18n" location="my-awesome-plugin"/>
+    <resource type="i18n" name="i18n" location="mail-catcher"/>
     
     <!-- add our web resources -->
 
@@ -48,13 +48,13 @@
     </servlet>
 
     <!-- Web конфигурация -->
-    <web-section key="my_awesome_plugin_config_section"
+    <web-section key="mail_catcher_config_section"
                  location="admin_plugins_menu"
                  weight="1000">
         <label key="plugin.name"/>
     </web-section>
     <web-item key="web.item.mail.viewer.servlet"
-              section="admin_plugins_menu/my_awesome_plugin_config_section"
+              section="admin_plugins_menu/mail_catcher_config_section"
               weight="40">
         <label key="mail.viewer.servlet"/>
         <link>/plugins/servlet/mail-items/</link>

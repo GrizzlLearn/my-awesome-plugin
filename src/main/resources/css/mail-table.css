@@ -9,20 +9,15 @@
 .header {
     text-align: center;
     margin-bottom: 20px;
-    padding: 20px;
+    padding: 10px 20px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 10px;
 }
 
 .header h1 {
-    margin: 0 0 8px 0;
-    font-size: 2rem;
-}
-
-.header p {
     margin: 0;
-    opacity: 0.9;
+    font-size: 1.6rem;
 }
 
 /* ===== ACTIONS ===== */
@@ -389,6 +384,166 @@
 .empty-state h3 {
     margin: 0 0 10px 0;
     color: #495057;
+}
+
+/* ===== SEARCH / TAG INPUT ===== */
+
+.search-bar {
+    margin-bottom: 16px;
+}
+
+.tag-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    min-height: 42px;
+    cursor: text;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.tag-input-container:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ede9fe;
+    color: #5b21b6;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tag-chip-remove {
+    background: none;
+    border: none;
+    padding: 0 0 0 2px;
+    cursor: pointer;
+    color: #7c3aed;
+    font-size: 0.85rem;
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.tag-chip-remove:hover {
+    opacity: 1;
+    color: #4c1d95;
+}
+
+.tag-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 160px;
+    font-size: 0.9rem;
+    color: #374151;
+    background: transparent;
+    padding: 2px 0;
+}
+
+.tag-input::placeholder {
+    color: #9ca3af;
+}
+
+.clear-search-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    font-size: 1rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.clear-search-btn:hover {
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
+/* ===== PAGINATION ===== */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.page-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #6b7280;
+    font-size: 0.875rem;
+    min-width: 180px;
+    text-align: center;
+}
+
+/* ===== DELETE ITEM BUTTON ===== */
+
+.delete-item-btn {
+    display: inline-block;
+    margin-top: 16px;
+    margin-left: 8px;
+    padding: 6px 14px;
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+}
+
+.delete-item-btn:hover {
+    background: #fecaca;
+    border-color: #f87171;
+}
+
+.delete-item-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.2);
 }
 
 /* ===== RESPONSIVE ===== */

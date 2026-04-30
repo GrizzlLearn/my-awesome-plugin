@@ -24,6 +24,7 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
 public class MailItemRequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
+    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final MailItemService mailItemService;
 
@@ -35,17 +36,23 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отдаёт все письма в виде JSON-массива.
+     * Отдаёт письма в виде JSON с поддержкой поиска и пагинации.
+     * Принимает query-параметры: {@code search}, {@code offset}, {@code limit}.
      * Соответствует GET {@code /mail-items/data}.
      *
+     * @param req  HTTP-запрос (используется для чтения query-параметров)
      * @param resp HTTP-ответ
      * @throws IOException если возникла ошибка записи ответа
      */
-    public void handleDataRequest(HttpServletResponse resp) throws IOException {
+    public void handleDataRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(JSON_CONTENT_TYPE);
 
         try {
-            String jsonData = mailItemService.getAllMailItemsAsJson();
+            String[] tags = req.getParameterValues("tag");
+            int offset = parseIntParam(req.getParameter("offset"), 0);
+            int limit = parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE);
+
+            String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit);
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(jsonData);
         } catch (JSONException e) {
@@ -71,6 +78,32 @@ public class MailItemRequestHandler {
             resp.getWriter().write(ok(deleted ? DELETE_SUCCESS_MESSAGE : DELETE_NOTHING_MESSAGE, payload).toString());
         } catch (Exception e) {
             log.error("Error deleting all mail items", e);
+            handleInternalError(resp, e);
+        }
+    }
+
+    /**
+     * Удаляет письмо по UUID.
+     * Соответствует DELETE {@code /mail-items/{uuid}}.
+     *
+     * @param uuid UUID письма для удаления
+     * @param resp HTTP-ответ
+     * @throws IOException если возникла ошибка записи ответа
+     */
+    public void handleDeleteByIdRequest(String uuid, HttpServletResponse resp) throws IOException {
+        setJsonResponseHeaders(resp);
+
+        try {
+            boolean deleted = mailItemService.deleteMailItemById(uuid);
+            if (deleted) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write(ok(DELETE_BY_ID_SUCCESS_MESSAGE).toString());
+            } else {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write(err(EMAIL_NOT_FOUND_MESSAGE).toString());
+            }
+        } catch (Exception e) {
+            log.error("Error deleting mail item: {}", uuid, e);
             handleInternalError(resp, e);
         }
     }
@@ -134,8 +167,9 @@ public class MailItemRequestHandler {
             log.error("Error parsing JSON request", e);
             handleInternalError(resp, e);
         } catch (IllegalArgumentException e) {
-            log.error("Invalid email data", e);
-            handleInternalError(resp, e);
+            log.warn("Invalid email data: {}", e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write(err(e.getMessage()).toString());
         } catch (Exception e) {
             log.error("Error adding email", e);
             handleInternalError(resp, e);
@@ -143,7 +177,7 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отвечает 404 для неизвестных POST-эндпоинтов.
+     * Отвечает 404 для неизвестных эндпоинтов.
      *
      * @param resp HTTP-ответ
      * @throws IOException если возникла ошибка записи ответа
@@ -185,6 +219,16 @@ public class MailItemRequestHandler {
     private void setJsonResponseHeaders(HttpServletResponse resp) {
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    }
+
+    private static int parseIntParam(String value, int defaultValue) {
+        if (value == null) return defaultValue;
+        try {
+            int v = Integer.parseInt(value);
+            return v >= 0 ? v : defaultValue;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private JSONObject ok(String message) {

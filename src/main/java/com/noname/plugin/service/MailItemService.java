@@ -115,16 +115,37 @@ public class MailItemService {
     }
 
     /**
-     * Возвращает все письма в виде JSON-строки (используется HTTP-эндпоинтом {@code /data}).
-     * Читает данные напрямую из сущностей, минуя маппер, чтобы не создавать лишних объектов.
+     * Возвращает количество писем в базе данных без загрузки всех записей в память.
      *
-     * @return JSON-массив со всеми письмами
+     * @return количество записей
+     */
+    public int countMailItems() {
+        return ao.count(MailItemEntity.class);
+    }
+
+    /**
+     * Возвращает страницу писем в виде JSON-строки с поддержкой поиска и пагинации.
+     * Каждый тег должен встречаться хотя бы в одном из полей письма (from, to, subject, body) —
+     * AND-логика: письмо попадает в результат только если соответствует всем переданным тегам.
+     *
+     * @param tags   массив поисковых тегов или {@code null} для возврата всех писем
+     * @param offset смещение (индекс первого элемента страницы)
+     * @param limit  максимальное количество элементов на странице (0 — вернуть всё)
+     * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}
      * @throws JSONException если сборка JSON не удалась
      */
-    public String getAllMailItemsAsJson() throws JSONException {
-        JSONArray array = new JSONArray();
+    public String getAllMailItemsAsJson(String[] tags, int offset, int limit) throws JSONException {
+        List<MailItemEntity> filtered = Arrays.stream(ao.find(MailItemEntity.class))
+                .filter(e -> matchesAllTags(e, tags))
+                .collect(Collectors.toList());
 
-        for (MailItemEntity entity : ao.find(MailItemEntity.class)) {
+        int total = filtered.size();
+        int effectiveLimit = (limit <= 0) ? total : limit;
+        int end = Math.min(offset + effectiveLimit, total);
+
+        JSONArray array = new JSONArray();
+        for (int i = Math.max(0, offset); i < end; i++) {
+            MailItemEntity entity = filtered.get(i);
             JSONObject obj = new JSONObject();
             obj.put("id", entity.getUuid());
             obj.put("from", entity.getFrom());
@@ -137,7 +158,12 @@ public class MailItemService {
             array.put(obj);
         }
 
-        return array.toString();
+        JSONObject result = new JSONObject();
+        result.put("items", array);
+        result.put("total", total);
+        result.put("offset", offset);
+        result.put("limit", effectiveLimit);
+        return result.toString();
     }
 
     /**
@@ -160,6 +186,19 @@ public class MailItemService {
     }
 
     /**
+     * Удаляет письмо по UUID.
+     *
+     * @param uuid идентификатор письма
+     * @return {@code true}, если письмо найдено и удалено; {@code false}, если письмо не найдено
+     */
+    public boolean deleteMailItemById(String uuid) {
+        MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
+        if (results.length == 0) return false;
+        ao.delete(results[0]);
+        return true;
+    }
+
+    /**
      * Добавляет 5 тестовых писем с HTML-содержимым.
      * Нумерация начинается с {@code (текущее_количество + 1)}, чтобы не конфликтовать с существующими записями.
      *
@@ -168,7 +207,7 @@ public class MailItemService {
      */
     public boolean loadTestData() {
         try {
-            int startIndex = ao.find(MailItemEntity.class).length + 1;
+            int startIndex = countMailItems() + 1;
 
             for (int i = startIndex; i < startIndex + 5; i++) {
                 MailItemEntity entity = ao.create(MailItemEntity.class);
@@ -196,5 +235,26 @@ public class MailItemService {
         } catch (Exception e) {
             throw new RuntimeException("Ошибка при создании тестовых данных", e);
         }
+    }
+
+    private static boolean matchesAllTags(MailItemEntity entity, String[] tags) {
+        if (tags == null || tags.length == 0) return true;
+        for (String tag : tags) {
+            String lower = tag.toLowerCase().trim();
+            if (lower.isEmpty()) continue;
+            if (!matchesTag(entity, lower)) return false;
+        }
+        return true;
+    }
+
+    private static boolean matchesTag(MailItemEntity entity, String lowerTag) {
+        return containsIgnoreCase(entity.getFrom(), lowerTag)
+                || containsIgnoreCase(entity.getTo(), lowerTag)
+                || containsIgnoreCase(entity.getSubject(), lowerTag)
+                || containsIgnoreCase(entity.getBody(), lowerTag);
+    }
+
+    private static boolean containsIgnoreCase(String field, String search) {
+        return field != null && field.toLowerCase().contains(search);
     }
 }

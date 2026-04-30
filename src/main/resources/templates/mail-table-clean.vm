@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="decorator" content="atl.admin">
-	<meta name="admin.active.section" content="admin_plugins_menu/my_awesome_plugin_config_section">
+	<meta name="admin.active.section" content="admin_plugins_menu/mail_catcher_config_section">
 	<meta name="admin.active.tab" content="web.item.mail.viewer.servlet">
 	<title>Mail Items Dashboard</title>
 	<link rel="stylesheet" type="text/css" href="css/mail-table.css">
@@ -13,7 +13,6 @@
 <div class="container">
 	<div class="header">
 		<h1>📧 Mail Items Dashboard</h1>
-		<p>Manage and view your mail items with style</p>
 	</div>
 	<div class="actions">
 		<button id="create-test-data-btn" class="create-btn">
@@ -23,6 +22,14 @@
 			🗑️ Delete All Items
 		</button>
 		<a href="data" target="_blank" class="json-btn">📊 View JSON</a>
+	</div>
+	<div class="search-bar">
+		<div class="tag-input-container" id="tag-input-container">
+			<div id="tags-list"></div>
+			<input type="text" id="tag-input" class="tag-input"
+			       placeholder="Введите запрос и нажмите Enter..." />
+			<button id="clear-search-btn" class="clear-search-btn" title="Очистить всё" style="display:none;">&#x2715;</button>
+		</div>
 	</div>
 	<div id="loading" class="loading">
 		<div class="spinner"></div>
@@ -46,6 +53,11 @@
 		<div id="stats" class="stats">
 			<!-- Stats will be shown here -->
 		</div>
+		<div id="pagination" class="pagination" style="display: none;">
+			<button id="prev-btn" class="page-btn" disabled>&#8592; Назад</button>
+			<span id="page-info" class="page-info"></span>
+			<button id="next-btn" class="page-btn">Вперёд &#8594;</button>
+		</div>
 	</div>
 
 	<div id="empty-state" class="empty-state" style="display: none;">
@@ -53,8 +65,8 @@
 			<path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
 			<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
 		</svg>
-		<h3>No mail items found</h3>
-		<p>There are currently no mail items to display.</p>
+		<h3 id="empty-title">No mail items found</h3>
+		<p id="empty-desc">There are currently no mail items to display.</p>
 	</div>
 </div>
 
@@ -63,9 +75,99 @@
 		const loading = document.getElementById("loading");
 		const content = document.getElementById("mail-items-content");
 		const emptyState = document.getElementById("empty-state");
+		const emptyTitle = document.getElementById("empty-title");
+		const emptyDesc = document.getElementById("empty-desc");
 		const tableBody = document.getElementById("mail-items-body");
 		const stats = document.getElementById("stats");
+		const pagination = document.getElementById("pagination");
+		const prevBtn = document.getElementById("prev-btn");
+		const nextBtn = document.getElementById("next-btn");
+		const pageInfo = document.getElementById("page-info");
+		const tagInput = document.getElementById("tag-input");
+		const tagsList = document.getElementById("tags-list");
+		const tagInputContainer = document.getElementById("tag-input-container");
+		const clearSearchBtn = document.getElementById("clear-search-btn");
 
+		// ===== State =====
+		const PAGE_SIZE = 10;
+		let currentOffset = 0;
+		let currentTags = [];
+		let savedScrollY = 0;
+		let preserveScroll = false;
+
+		// ===== Tag input =====
+		function renderTags() {
+			tagsList.innerHTML = '';
+			currentTags.forEach(function (tag, i) {
+				const chip = document.createElement('span');
+				chip.className = 'tag-chip';
+				chip.title = tag;
+
+				const label = document.createElement('span');
+				label.textContent = tag;
+
+				const removeBtn = document.createElement('button');
+				removeBtn.className = 'tag-chip-remove';
+				removeBtn.type = 'button';
+				removeBtn.innerHTML = '&#x2715;';
+				removeBtn.title = 'Убрать';
+				removeBtn.addEventListener('click', function (e) {
+					e.stopPropagation();
+					currentTags.splice(i, 1);
+					renderTags();
+					currentOffset = 0;
+					loadData();
+				});
+
+				chip.appendChild(label);
+				chip.appendChild(removeBtn);
+				tagsList.appendChild(chip);
+			});
+
+			clearSearchBtn.style.display = currentTags.length > 0 ? 'inline-flex' : 'none';
+			tagInput.placeholder = currentTags.length > 0 ? 'Добавить ещё...' : 'Введите запрос и нажмите Enter...';
+		}
+
+		tagInputContainer.addEventListener('click', function () { tagInput.focus(); });
+
+		tagInput.addEventListener('keydown', function (e) {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				var val = tagInput.value.trim();
+				if (!val) return;
+				if (currentTags.indexOf(val) === -1) currentTags.push(val);
+				tagInput.value = '';
+				renderTags();
+				currentOffset = 0;
+				loadData();
+			} else if (e.key === 'Backspace' && !tagInput.value && currentTags.length > 0) {
+				currentTags.pop();
+				renderTags();
+				currentOffset = 0;
+				loadData();
+			}
+		});
+
+		clearSearchBtn.addEventListener('click', function () {
+			currentTags = [];
+			tagInput.value = '';
+			renderTags();
+			currentOffset = 0;
+			loadData();
+		});
+
+		// ===== Pagination =====
+		prevBtn.addEventListener('click', function () {
+			currentOffset = Math.max(0, currentOffset - PAGE_SIZE);
+			loadData();
+		});
+
+		nextBtn.addEventListener('click', function () {
+			currentOffset += PAGE_SIZE;
+			loadData();
+		});
+
+		// ===== Utilities =====
 		function escapeHtml(text) {
 			if (!text) return '';
 			return String(text)
@@ -106,21 +208,30 @@
 			return lines.join('\n');
 		}
 
+		// ===== Load data =====
 		function loadData() {
+			savedScrollY = preserveScroll ? window.scrollY : 0;
+			preserveScroll = false;
 			loading.style.display = "block";
 			content.style.display = "none";
 			emptyState.style.display = "none";
+			pagination.style.display = "none";
 			tableBody.innerHTML = '';
 
-			fetch("$contextPath/plugins/servlet/mail-items/data")
-				.then(response => {
+			const params = new URLSearchParams();
+			currentTags.forEach(function (tag) { params.append('tag', tag); });
+			params.set('offset', currentOffset);
+			params.set('limit', PAGE_SIZE);
+
+			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString())
+				.then(function (response) {
 					if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
 					const ct = response.headers.get("content-type");
 					if (!ct || !ct.includes("application/json")) throw new Error("Response is not JSON");
 					return response.json();
 				})
-				.then(items => processMailItems(items))
-				.catch(error => {
+				.then(function (data) { processMailItems(data); })
+				.catch(function (error) {
 					console.error('Error fetching mail items:', error);
 					loading.innerHTML =
 						'<div style="color: #ef4444;">' +
@@ -131,16 +242,18 @@
 				});
 		}
 
+		// ===== Create test data =====
 		function createTestData() {
 			fetch("$contextPath/plugins/servlet/mail-items/create-test-data", {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
 			})
-				.then(r => r.json())
-				.then(result => { if (result.success) loadData(); })
-				.catch(e => console.error('Error creating test data:', e));
+				.then(function (r) { return r.json(); })
+				.then(function (result) { if (result.success) { preserveScroll = true; loadData(); } })
+				.catch(function (e) { console.error('Error creating test data:', e); });
 		}
 
+		// ===== Delete all =====
 		let deleteConfirmTimer = null;
 
 		function deleteAllMailItems() {
@@ -171,18 +284,40 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' }
 			})
-				.then(r => r.json())
-				.then(result => { if (result.success) loadData(); })
-				.catch(e => console.error('Error deleting:', e))
-				.finally(() => {
+				.then(function (r) { return r.json(); })
+				.then(function (result) {
+					if (result.success) { currentOffset = 0; loadData(); }
+				})
+				.catch(function (e) { console.error('Error deleting:', e); })
+				.finally(function () {
 					deleteBtn.disabled = false;
 					deleteBtn.textContent = '🗑️ Delete All Items';
 				});
 		}
 
+		// ===== Delete single item =====
+		function deleteMailItem(id) {
+			if (!confirm('Удалить это письмо?')) return;
+			fetch("$contextPath/plugins/servlet/mail-items/" + id, {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' }
+			})
+				.then(function (r) { return r.json(); })
+				.then(function (result) {
+					if (result.success) {
+						preserveScroll = true;
+						loadData();
+					} else {
+						alert('Ошибка при удалении: ' + (result.error || 'неизвестная ошибка'));
+					}
+				})
+				.catch(function (e) { console.error('Error deleting item:', e); });
+		}
+
 		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
 		document.getElementById('delete-all-btn').addEventListener('click', deleteAllMailItems);
 
+		// ===== Detail row =====
 		function createDetailRow(item) {
 			const detailRow = document.createElement("tr");
 			detailRow.className = "detail-row";
@@ -196,7 +331,7 @@
 			const emailView = document.createElement('div');
 			emailView.className = 'email-view';
 
-			// --- Header: From / To / CC / BCC ---
+			// Header: From / To / CC / BCC
 			const header = document.createElement('div');
 			header.className = 'email-header';
 
@@ -216,12 +351,12 @@
 			addField('Копия:', item.cc);
 			addField('Скрытая:', item.bcc);
 
-			// --- Subject ---
+			// Subject
 			const subjectLine = document.createElement('div');
 			subjectLine.className = 'email-subject-line';
 			subjectLine.textContent = item.subject || 'Без темы';
 
-			// --- Body ---
+			// Body
 			const bodyContainer = document.createElement('div');
 			bodyContainer.className = 'email-body-container';
 
@@ -265,9 +400,18 @@
 				sourceBtn.classList.toggle('source-btn-active', showingRaw);
 			});
 
+			const deleteItemBtn = document.createElement('button');
+			deleteItemBtn.className = 'delete-item-btn';
+			deleteItemBtn.textContent = 'Удалить';
+			deleteItemBtn.addEventListener('click', function (e) {
+				e.stopPropagation();
+				deleteMailItem(item.id);
+			});
+
 			bodyContainer.appendChild(htmlView);
 			bodyContainer.appendChild(rawView);
 			bodyContainer.appendChild(sourceBtn);
+			bodyContainer.appendChild(deleteItemBtn);
 
 			emailView.appendChild(header);
 			emailView.appendChild(subjectLine);
@@ -279,28 +423,40 @@
 			return detailRow;
 		}
 
-		function processMailItems(items) {
+		// ===== Process items =====
+		function processMailItems(data) {
 			loading.style.display = "none";
 
+			const items = data.items;
+			const total = data.total;
+			const offset = data.offset;
+			const limit = data.limit;
+
 			if (items.length === 0) {
+				if (currentTags.length > 0) {
+					emptyTitle.textContent = 'Ничего не найдено';
+					emptyDesc.textContent = 'Нет писем, соответствующих всем заданным фильтрам.';
+				} else {
+					emptyTitle.textContent = 'No mail items found';
+					emptyDesc.textContent = 'There are currently no mail items to display.';
+				}
 				emptyState.style.display = "block";
 				return;
 			}
 
 			content.style.display = "block";
 
-			items.forEach(item => {
-				// --- Main row ---
+			items.forEach(function (item) {
+				// Main row
 				const row = document.createElement("tr");
 				row.className = "mail-row";
 
-				// From cell
 				const fromCell = document.createElement("td");
 				fromCell.className = "from-cell";
 
 				const indicator = document.createElement('span');
 				indicator.className = 'expand-indicator';
-				indicator.innerHTML = '&#9656;'; // ▶
+				indicator.innerHTML = '&#9656;';
 
 				const fromText = document.createElement('span');
 				fromText.textContent = item.from || 'Неизвестный отправитель';
@@ -308,7 +464,6 @@
 				fromCell.appendChild(indicator);
 				fromCell.appendChild(fromText);
 
-				// Subject + preview cell
 				const subjectCell = document.createElement("td");
 				subjectCell.className = "subject-col";
 
@@ -327,7 +482,7 @@
 				row.appendChild(fromCell);
 				row.appendChild(subjectCell);
 
-				// --- Detail row ---
+				// Detail row
 				const detailRow = createDetailRow(item);
 
 				row.addEventListener('click', function () {
@@ -340,7 +495,24 @@
 				tableBody.appendChild(detailRow);
 			});
 
-			stats.textContent = 'Showing ' + items.length + ' mail item' + (items.length !== 1 ? 's' : '');
+			// Stats
+			const from = offset + 1;
+			const to = Math.min(offset + items.length, total);
+			stats.textContent = 'Показано ' + from + '–' + to + ' из ' + total + ' писем';
+
+			// Pagination
+			if (total > limit) {
+				pagination.style.display = 'flex';
+				prevBtn.disabled = offset === 0;
+				nextBtn.disabled = offset + limit >= total;
+				const currentPage = Math.floor(offset / limit) + 1;
+				const totalPages = Math.ceil(total / limit);
+				pageInfo.textContent = 'Страница ' + currentPage + ' из ' + totalPages;
+			}
+
+			requestAnimationFrame(function () {
+				window.scrollTo(0, savedScrollY);
+			});
 		}
 
 		loadData();

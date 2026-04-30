@@ -39,14 +39,63 @@ class MailItemRequestHandlerTest {
     // ===== handleDataRequest =====
 
     @Test
-    @DisplayName("handleDataRequest: возвращает JSON со статусом 200")
-    void handleDataRequest_returnsJsonWith200() throws Exception {
-        when(mailItemService.getAllMailItemsAsJson()).thenReturn("[{\"id\":\"abc\"}]");
+    @DisplayName("handleDataRequest: без тегов возвращает все письма со статусом 200")
+    void handleDataRequest_noTags_returnsAllWith200() throws Exception {
+        String json = "{\"items\":[{\"id\":\"abc\"}],\"total\":1,\"offset\":0,\"limit\":10}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10)).thenReturn(json);
 
-        handler.handleDataRequest(resp);
+        handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
-        verify(writer).write("[{\"id\":\"abc\"}]");
+        verify(writer).write(json);
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: передаёт теги и параметры пагинации в сервис")
+    void handleDataRequest_withTagsAndPagination_passesParams() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":10,\"limit\":5}";
+        String[] tags = {"example", "lorem"};
+        when(req.getParameterValues("tag")).thenReturn(tags);
+        when(req.getParameter("offset")).thenReturn("10");
+        when(req.getParameter("limit")).thenReturn("5");
+        when(mailItemService.getAllMailItemsAsJson(tags, 10, 5)).thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_OK);
+        verify(mailItemService).getAllMailItemsAsJson(tags, 10, 5);
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: отрицательные и нечисловые offset/limit заменяются дефолтными значениями")
+    void handleDataRequest_withInvalidParams_usesDefaults() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn("-5");
+        when(req.getParameter("limit")).thenReturn("abc");
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10)).thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_OK);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10);
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: JSONException от сервиса возвращает 500")
+    void handleDataRequest_serviceThrowsJSONException_returns500() throws Exception {
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10))
+                .thenThrow(new com.atlassian.jira.util.json.JSONException("json error"));
+
+        handler.handleDataRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
 
     // ===== handleDeleteAllRequest =====
@@ -86,11 +135,12 @@ class MailItemRequestHandlerTest {
     }
 
     @Test
-    @DisplayName("handleCreateTestDataRequest: при неудаче возвращает success=true с сообщением об ошибке")
+    @DisplayName("handleCreateTestDataRequest: при неудаче возвращает 200 с сообщением об ошибке создания")
     void handleCreateTestDataRequest_failed_returnsErrorMessage() throws IOException {
         handler.handleCreateTestDataRequest(resp, false);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
+        assertResponseContains("\"success\":true");
         assertResponseContains("Failed to create test data");
     }
 
@@ -128,6 +178,44 @@ class MailItemRequestHandlerTest {
         handler.handleAddEmailRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @DisplayName("handleAddEmailRequest: отсутствует получатель — возвращает 400")
+    void handleAddEmailRequest_missingRecipient_returns400() throws Exception {
+        String json = "{\"from\":\"a@b.com\",\"subject\":\"Тема\"}";
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
+        when(mailItemService.createMailItemFromJson(any()))
+                .thenThrow(new IllegalArgumentException("At least one recipient field (to, cc, bcc) must be provided"));
+
+        handler.handleAddEmailRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        assertResponseContains("At least one recipient");
+    }
+
+    // ===== handleDeleteByIdRequest =====
+
+    @Test
+    @DisplayName("handleDeleteByIdRequest: существующее письмо — возвращает 200")
+    void handleDeleteByIdRequest_existing_returns200() throws IOException {
+        when(mailItemService.deleteMailItemById("uuid-1")).thenReturn(true);
+
+        handler.handleDeleteByIdRequest("uuid-1", resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_OK);
+        assertResponseContains("Mail item deleted successfully");
+    }
+
+    @Test
+    @DisplayName("handleDeleteByIdRequest: несуществующее письмо — возвращает 404")
+    void handleDeleteByIdRequest_notFound_returns404() throws IOException {
+        when(mailItemService.deleteMailItemById("no-such-uuid")).thenReturn(false);
+
+        handler.handleDeleteByIdRequest("no-such-uuid", resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_NOT_FOUND);
+        assertResponseContains("Mail item not found");
     }
 
     // ===== handleForbiddenRequest / handleNotFoundRequest / handleInternalError =====

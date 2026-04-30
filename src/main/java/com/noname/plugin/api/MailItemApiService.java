@@ -34,6 +34,11 @@ public class MailItemApiService {
         this.mailItemService = ComponentAccessor.getOSGiComponentInstanceOfType(MailItemService.class);
     }
 
+    /** Конструктор для unit-тестирования без OSGi-контейнера. */
+    MailItemApiService(MailItemService mailItemService) {
+        this.mailItemService = mailItemService;
+    }
+
     // ===== Добавление писем =====
 
     /**
@@ -95,7 +100,7 @@ public class MailItemApiService {
      * @return количество записей в базе данных
      */
     public int getEmailCount() {
-        return mailItemService.getAllMailItems().size();
+        return mailItemService.countMailItems();
     }
 
     /**
@@ -105,6 +110,14 @@ public class MailItemApiService {
      */
     public boolean deleteAllEmails() {
         return mailItemService.deleteAllMailItemsSafe();
+    }
+
+    /**
+     * Создаёт 5 тестовых писем с HTML-содержимым.
+     * Используется для быстрого наполнения базы при ручном тестировании.
+     */
+    public void loadTestData() {
+        mailItemService.loadTestData();
     }
 
     // ===== Чтение отдельных полей письма по ID =====
@@ -181,23 +194,6 @@ public class MailItemApiService {
     }
 
     // ===== Вспомогательные методы =====
-
-    /**
-     * Загружает письмо по ID или бросает исключение, если оно не найдено.
-     *
-     * @param id UUID письма
-     * @return {@link MailItem}
-     * @throws IllegalArgumentException если письмо не найдено
-     */
-    /**
-     * Создаёт 5 тестовых писем с HTML-содержимым.
-     * Используется для быстрого наполнения базы при ручном тестировании.
-     *
-     * @return {@code true} при успехе
-     */
-    public boolean loadTestData() {
-        return mailItemService.loadTestData();
-    }
 
     private MailItem getOrThrow(String id) {
         MailItem item = mailItemService.getMailItemById(id);
