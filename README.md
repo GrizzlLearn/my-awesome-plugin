@@ -9,7 +9,7 @@ JIRA-плагин для захвата, визуального просмотр
 | Слой | Технологии |
 |---|---|
 | Платформа | Atlassian JIRA 9.12.2, OSGi, Atlassian Plugin SDK |
-| Backend | Java 11, Spring (`@Component` + `@Inject`), Active Objects (ORM) |
+| Backend | Java 17, Spring (`@Component` + `@Inject`), Active Objects (ORM) |
 | Frontend | Vanilla JS, CSS (без фреймворков), Velocity-шаблоны |
 | HTML-парсинг | Jsoup 1.17.2 (bundled в JAR) |
 | Тесты | JUnit 4/5, Mockito 5, Atlassian Wired Test Runner |
@@ -61,7 +61,7 @@ POST и DELETE требуют прав **системного администр
 
 | Параметр | Тип | По умолчанию | Описание |
 |---|---|---|---|
-| `search` | string | — | Поиск по `from`, `to`, `subject` (без учёта регистра) |
+| `tag` | string (повторяемый) | — | Фильтр по тегу; AND-логика — письмо должно содержать все теги |
 | `offset` | int | `0` | Индекс первого элемента страницы |
 | `limit` | int | `10` | Количество элементов на странице |
 
@@ -94,12 +94,12 @@ POST и DELETE требуют прав **системного администр
 
 ## UI
 
-Таблица писем: `http://localhost:2990/jira/plugins/servlet/mail-items/`
+Таблица писем: `<YOUR-INSTALLATION>/plugins/servlet/mail-items/`
 (также через **Администрирование → Mail Viewer**).
 
 **Список писем** — колонки: отправитель и тема с коротким превью тела.
 
-**Поиск** — строка ввода над таблицей фильтрует по отправителю, получателю и теме в реальном времени (debounce 300 мс).
+**Поиск** — строка ввода над таблицей. Введи текст и нажми Enter — добавится тег-фильтр. Можно добавить несколько тегов; письмо показывается только если соответствует всем (AND-логика). Теги удаляются крестиком или Backspace.
 
 **Пагинация** — кнопки «Назад» / «Вперёд» с индикатором текущей страницы появляются при количестве писем больше 10.
 
@@ -237,6 +237,7 @@ class EmailTemplateSpec extends Specification {
         api.getEmailBodyHtml(id) == "<h1>Заголовок</h1><p>Абзац с <strong>текстом</strong>.</p>"
     }
 }
+```
 
 ---
 
@@ -258,10 +259,6 @@ mvn test -Dtest="MailItemRequestHandlerTest,MailItemApiServiceTest,MailItemServi
 # Запустить все тесты включая wired (требует запущенную JIRA)
 mvn verify
 ```
-
-Локальная JIRA: `http://localhost:2990/jira`  
-Логи плагина: `target/jira/home/log/plugin.log`
-
 ---
 
 ## Установка

@@ -39,10 +39,10 @@
         <entity>com.noname.plugin.ao.MailItemEntity</entity>
     </ao>
     <!-- Servlet конфигурация -->
-    <servlet name="Mail Viewer"
+    <servlet name="Mail Catcher"
              key="mail-viewer-servlet"
              class="com.noname.plugin.servlet.MailViewerServlet">
-        <description>View all saved MailItems</description>
+        <description>Capture and inspect outgoing emails</description>
         <url-pattern>/mail-items</url-pattern>
         <url-pattern>/mail-items/*</url-pattern>
     </servlet>
