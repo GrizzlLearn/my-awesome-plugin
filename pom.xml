@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>mail-catcher</artifactId>
-    <version>0.9.5.0</version>
+    <version>0.9.5.1</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>

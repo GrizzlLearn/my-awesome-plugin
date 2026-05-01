@@ -158,11 +158,13 @@
 		// ===== Pagination =====
 		prevBtn.addEventListener('click', function () {
 			currentOffset = Math.max(0, currentOffset - PAGE_SIZE);
+			preserveScroll = true;
 			loadData();
 		});
 
 		nextBtn.addEventListener('click', function () {
 			currentOffset += PAGE_SIZE;
+			preserveScroll = true;
 			loadData();
 		});
 
