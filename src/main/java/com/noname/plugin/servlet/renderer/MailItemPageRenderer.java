@@ -1,10 +1,14 @@
 package com.noname.plugin.servlet.renderer;
 
+import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.webresource.api.assembler.RequiredResources;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
@@ -24,17 +28,19 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * CSS-файлы отдаются напрямую из classpath, минуя стандартный механизм WebResource,
  * чтобы они были доступны без полной JIRA-декорации страницы.
  */
+@Component
 public class MailItemPageRenderer {
 
     private static final Logger log = LoggerFactory.getLogger(MailItemPageRenderer.class);
 
     private final PageBuilderService pageBuilderService;
+    private final ApplicationProperties applicationProperties;
 
-    /**
-     * @param pageBuilderService сервис для подключения WebResource-ресурсов к странице
-     */
-    public MailItemPageRenderer(PageBuilderService pageBuilderService) {
+    @Inject
+    public MailItemPageRenderer(@ComponentImport PageBuilderService pageBuilderService,
+                                @ComponentImport ApplicationProperties applicationProperties) {
         this.pageBuilderService = checkNotNull(pageBuilderService);
+        this.applicationProperties = checkNotNull(applicationProperties);
     }
 
     /**
@@ -127,6 +133,10 @@ public class MailItemPageRenderer {
     }
 
     private String buildBaseUrl(HttpServletRequest req) {
+        String baseUrl = applicationProperties.getBaseUrl();
+        if (baseUrl != null && !baseUrl.isEmpty()) {
+            return baseUrl;
+        }
         return req.getScheme() + "://" + req.getServerName() + ":" +
                 req.getServerPort() + req.getContextPath();
     }

@@ -91,7 +91,7 @@ class MailItemServiceTest {
     @Test
     @DisplayName("getAllMailItemsAsJson: пустая база — возвращает пустые items и total=0")
     void getAllMailItemsAsJson_emptyDb_returnsEmptyItems() throws JSONException {
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[0]);
+        when(ao.count(MailItemEntity.class)).thenReturn(0);
 
         String json = service.getAllMailItemsAsJson((String[]) null, 0, 10);
 
@@ -106,7 +106,9 @@ class MailItemServiceTest {
         stubEntity(entity1, "uuid-1", "a@test.com", "x@test.com", "Тема 1", "<p>1</p>");
         stubEntity(entity2, "uuid-2", "b@test.com", "y@test.com", "Тема 2", "<p>2</p>");
         stubEntity(entity3, "uuid-3", "c@test.com", "z@test.com", "Тема 3", "<p>3</p>");
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
+        when(ao.count(MailItemEntity.class)).thenReturn(3);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
 
         String json = service.getAllMailItemsAsJson((String[]) null, 0, 10);
 
@@ -119,7 +121,7 @@ class MailItemServiceTest {
     @Test
     @DisplayName("getAllMailItemsAsJson: ответ содержит поля items, total, offset, limit")
     void getAllMailItemsAsJson_responseContainsRequiredFields() throws JSONException {
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[0]);
+        when(ao.count(MailItemEntity.class)).thenReturn(0);
 
         String json = service.getAllMailItemsAsJson((String[]) null, 5, 20);
 
@@ -139,7 +141,8 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_searchByFrom_filtersCorrectly() throws JSONException {
         stubEntity(entity1, "uuid-1", "alice@test.com", "x@t.com", "Тема", null);
         stubEntity(entity2, "uuid-2", "bob@test.com",   "y@t.com", "Тема", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2});
 
         String json = service.getAllMailItemsAsJson(new String[]{"ALICE"}, 0, 10);
 
@@ -153,7 +156,8 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_searchBySubject_filtersCorrectly() throws JSONException {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Отчёт Q1", null);
         stubEntity(entity2, "uuid-2", "b@t.com", "y@t.com", "Привет",   null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2});
 
         String json = service.getAllMailItemsAsJson(new String[]{"отчёт"}, 0, 10);
 
@@ -166,7 +170,8 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_searchByBody_filtersCorrectly() throws JSONException {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", "<p>Lorem ipsum dolor</p>");
         stubEntity(entity2, "uuid-2", "b@t.com", "y@t.com", "Тема", "<p>Привет мир</p>");
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2});
 
         String json = service.getAllMailItemsAsJson(new String[]{"lorem"}, 0, 10);
 
@@ -181,7 +186,8 @@ class MailItemServiceTest {
         stubEntity(entity1, "uuid-1", "alice@example.com", "x@t.com", "Тема", "<p>Lorem ipsum</p>");
         stubEntity(entity2, "uuid-2", "bob@example.com",   "y@t.com", "Тема", "<p>Привет</p>");
         stubEntity(entity3, "uuid-3", "carol@other.com",   "z@t.com", "Тема", "<p>Lorem ipsum</p>");
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
 
         // "example" matches entity1 and entity2 by from; "lorem" matches entity1 and entity3 by body
         // AND → только entity1 соответствует обоим
@@ -196,7 +202,8 @@ class MailItemServiceTest {
     @DisplayName("getAllMailItemsAsJson: поиск без совпадений — возвращает пустые items")
     void getAllMailItemsAsJson_searchNoMatch_returnsEmpty() throws JSONException {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1});
 
         String json = service.getAllMailItemsAsJson(new String[]{"zzznomatch"}, 0, 10);
 
@@ -209,7 +216,8 @@ class MailItemServiceTest {
     @DisplayName("getAllMailItemsAsJson: null-поля сущности не вызывают NPE при поиске")
     void getAllMailItemsAsJson_searchWithNullFields_noNpe() throws JSONException {
         stubEntity(entity1, "uuid-1", null, null, null, null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1});
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1});
 
         assertDoesNotThrow(() -> service.getAllMailItemsAsJson(new String[]{"test"}, 0, 10));
     }
@@ -222,7 +230,9 @@ class MailItemServiceTest {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема 1", null);
         stubEntity(entity2, "uuid-2", "b@t.com", "y@t.com", "Тема 2", null);
         stubEntity(entity3, "uuid-3", "c@t.com", "z@t.com", "Тема 3", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
+        when(ao.count(MailItemEntity.class)).thenReturn(3);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity2, entity3});
 
         String json = service.getAllMailItemsAsJson(null, 1, 10);
 
@@ -238,7 +248,9 @@ class MailItemServiceTest {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема 1", null);
         stubEntity(entity2, "uuid-2", "b@t.com", "y@t.com", "Тема 2", null);
         stubEntity(entity3, "uuid-3", "c@t.com", "z@t.com", "Тема 3", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
+        when(ao.count(MailItemEntity.class)).thenReturn(3);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2});
 
         String json = service.getAllMailItemsAsJson(null, 0, 2);
 
@@ -253,7 +265,9 @@ class MailItemServiceTest {
     @DisplayName("getAllMailItemsAsJson: offset за пределами total — возвращает пустые items")
     void getAllMailItemsAsJson_offsetBeyondTotal_returnsEmptyItems() throws JSONException {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1});
+        when(ao.count(MailItemEntity.class)).thenReturn(1);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[0]);
 
         String json = service.getAllMailItemsAsJson(null, 100, 10);
 
@@ -267,7 +281,9 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_zeroLimit_returnsAll() throws JSONException {
         stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема 1", null);
         stubEntity(entity2, "uuid-2", "b@t.com", "y@t.com", "Тема 2", null);
-        when(ao.find(MailItemEntity.class)).thenReturn(new MailItemEntity[]{entity1, entity2});
+        when(ao.count(MailItemEntity.class)).thenReturn(2);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1, entity2});
 
         String json = service.getAllMailItemsAsJson(null, 0, 0);
 

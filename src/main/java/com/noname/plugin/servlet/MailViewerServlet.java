@@ -1,12 +1,9 @@
 package com.noname.plugin.servlet;
 
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.sal.api.user.UserKey;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.jira.component.ComponentAccessor;
-import com.noname.plugin.service.MailItemService;
 import com.noname.plugin.servlet.handler.MailItemRequestHandler;
 import com.noname.plugin.servlet.renderer.MailItemPageRenderer;
 import com.noname.plugin.servlet.util.TestDataInitializer;
@@ -14,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,12 +46,12 @@ public class MailViewerServlet extends HttpServlet {
     private final TestDataInitializer testDataInitializer;
 
     @Inject
-    public MailViewerServlet(MailItemService mailItemService,
-                             @ComponentImport PageBuilderService pageBuilderService) {
-        MailItemService checkedMailItemService = checkNotNull(mailItemService);
-        this.requestHandler = new MailItemRequestHandler(checkedMailItemService);
-        this.pageRenderer = new MailItemPageRenderer(checkNotNull(pageBuilderService));
-        this.testDataInitializer = new TestDataInitializer(checkedMailItemService);
+    public MailViewerServlet(MailItemRequestHandler requestHandler,
+                             MailItemPageRenderer pageRenderer,
+                             TestDataInitializer testDataInitializer) {
+        this.requestHandler = checkNotNull(requestHandler);
+        this.pageRenderer = checkNotNull(pageRenderer);
+        this.testDataInitializer = checkNotNull(testDataInitializer);
     }
 
     /**
@@ -75,14 +71,22 @@ public class MailViewerServlet extends HttpServlet {
                 return;
             }
 
+            if (requestURI.contains("/css/")) {
+                pageRenderer.serveCssFile(req, resp);
+                return;
+            }
+
+            if (!isUserAuthorized()) {
+                handleUnauthorizedRequest(resp);
+                return;
+            }
+
             if (requestURI.endsWith(MAIL_ITEMS_ROOT)) {
                 pageRenderer.renderTablePage(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_DATA)) {
                 requestHandler.handleDataRequest(req, resp);
             } else if (requestURI.endsWith(MAIL_ITEMS_TABLE)) {
                 pageRenderer.renderTablePage(req, resp);
-            } else if (requestURI.contains("/css/")) {
-                pageRenderer.serveCssFile(req, resp);
             } else {
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Page not found");
             }
@@ -162,6 +166,7 @@ public class MailViewerServlet extends HttpServlet {
      */
     private boolean isUserAuthorized() {
         UserManager userManager = ComponentAccessor.getOSGiComponentInstanceOfType(UserManager.class);
+        if (userManager == null) return false;
         UserKey userKey = userManager.getRemoteUserKey();
         ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
         return user != null && userManager.isSystemAdmin(userKey);

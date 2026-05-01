@@ -135,17 +135,36 @@ public class MailItemService {
      * @throws JSONException если сборка JSON не удалась
      */
     public String getAllMailItemsAsJson(String[] tags, int offset, int limit) throws JSONException {
-        List<MailItemEntity> filtered = Arrays.stream(ao.find(MailItemEntity.class))
-                .filter(e -> matchesAllTags(e, tags))
-                .collect(Collectors.toList());
+        boolean hasSearch = tags != null
+                && Arrays.stream(tags).anyMatch(t -> t != null && !t.trim().isEmpty());
 
-        int total = filtered.size();
-        int effectiveLimit = (limit <= 0) ? total : limit;
-        int end = Math.min(offset + effectiveLimit, total);
+        List<MailItemEntity> page;
+        int total;
+
+        if (!hasSearch) {
+            total = ao.count(MailItemEntity.class);
+            if (total == 0) {
+                page = List.of();
+            } else {
+                int safeOffset = Math.max(0, offset);
+                int safeLimit = (limit <= 0) ? total : limit;
+                page = Arrays.asList(ao.find(MailItemEntity.class,
+                        Query.select().limit(safeLimit).offset(safeOffset)));
+            }
+        } else {
+            // In-memory filtering with a cap to avoid OOM on large tables
+            MailItemEntity[] all = ao.find(MailItemEntity.class, Query.select().limit(5000));
+            List<MailItemEntity> filtered = Arrays.stream(all)
+                    .filter(e -> matchesAllTags(e, tags))
+                    .collect(Collectors.toList());
+            total = filtered.size();
+            int safeOffset = Math.max(0, offset);
+            int safeLimit = (limit <= 0) ? total : limit;
+            page = total == 0 ? List.of() : filtered.subList(safeOffset, Math.min(safeOffset + safeLimit, total));
+        }
 
         JSONArray array = new JSONArray();
-        for (int i = Math.max(0, offset); i < end; i++) {
-            MailItemEntity entity = filtered.get(i);
+        for (MailItemEntity entity : page) {
             JSONObject obj = new JSONObject();
             obj.put("id", entity.getUuid());
             obj.put("from", entity.getFrom());
@@ -162,7 +181,7 @@ public class MailItemService {
         result.put("items", array);
         result.put("total", total);
         result.put("offset", offset);
-        result.put("limit", effectiveLimit);
+        result.put("limit", (limit <= 0) ? total : limit);
         return result.toString();
     }
 

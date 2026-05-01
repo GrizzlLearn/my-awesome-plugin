@@ -239,20 +239,9 @@ class MailItemRequestHandlerTest {
     }
 
     @Test
-    @DisplayName("handleInternalError: возвращает 500 с сообщением из исключения")
-    void handleInternalError_returns500WithExceptionMessage() throws IOException {
+    @DisplayName("handleInternalError: всегда возвращает 500 со стандартным текстом, не раскрывая деталей исключения")
+    void handleInternalError_returns500WithGenericMessage() throws IOException {
         Exception ex = new RuntimeException("что-то сломалось");
-
-        handler.handleInternalError(resp, ex);
-
-        verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        assertResponseContains("что-то сломалось");
-    }
-
-    @Test
-    @DisplayName("handleInternalError: при null-сообщении в исключении возвращает дефолтный текст")
-    void handleInternalError_nullExceptionMessage_returnsDefaultMessage() throws IOException {
-        Exception ex = new RuntimeException((String) null);
 
         handler.handleInternalError(resp, ex);
 

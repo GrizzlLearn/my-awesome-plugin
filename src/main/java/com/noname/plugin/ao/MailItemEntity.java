@@ -2,6 +2,7 @@ package com.noname.plugin.ao;
 
 import net.java.ao.Entity;
 import net.java.ao.Preload;
+import net.java.ao.schema.Indexed;
 import net.java.ao.schema.StringLength;
 import net.java.ao.schema.Table;
 
@@ -17,6 +18,7 @@ import net.java.ao.schema.Table;
 public interface MailItemEntity extends Entity {
 
     /** Уникальный идентификатор письма (UUID). Используется как бизнес-ключ вместо автоинкрементного ID. */
+    @Indexed
     String getUuid();
     void setUuid(String uuid);
 

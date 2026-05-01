@@ -33,20 +33,21 @@ public class MailItemModelWiredTest {
     // ===== MailItem — модель =====
 
     @Test
-    public void mailItem_idGeneratedAutomatically() {
+    public void api_idAssignedAfterPersist() {
         MailItem item = new MailItem("to@test.com");
+        String id = api.addEmail(item);
 
-        assertNotNull(item.getId());
-        assertFalse(item.getId().isEmpty());
+        assertNotNull(id);
+        assertFalse(id.isEmpty());
     }
 
     @Test
-    public void mailItem_idIsUniquePerInstance() {
+    public void api_idIsUniquePerEmail() {
         Set<String> ids = new HashSet<>();
-        for (int i = 0; i < 50; i++) {
-            ids.add(new MailItem("to@test.com").getId());
+        for (int i = 0; i < 10; i++) {
+            ids.add(api.addEmail(new MailItem("to" + i + "@test.com")));
         }
-        assertEquals("Все 50 ID должны быть уникальными", 50, ids.size());
+        assertEquals(10, ids.size());
     }
 
     @Test

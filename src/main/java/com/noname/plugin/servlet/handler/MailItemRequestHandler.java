@@ -5,7 +5,9 @@ import com.atlassian.jira.util.json.JSONObject;
 import com.noname.plugin.service.MailItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -21,6 +23,7 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * Содержит по одному методу на каждую операцию — читает запрос, вызывает сервис, формирует JSON-ответ.
  * Маршрутизация (какой метод вызвать) находится в {@link com.noname.plugin.servlet.MailViewerServlet}.
  */
+@Component
 public class MailItemRequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
@@ -28,9 +31,7 @@ public class MailItemRequestHandler {
 
     private final MailItemService mailItemService;
 
-    /**
-     * @param mailItemService сервис для работы с письмами
-     */
+    @Inject
     public MailItemRequestHandler(MailItemService mailItemService) {
         this.mailItemService = checkNotNull(mailItemService);
     }
@@ -210,8 +211,7 @@ public class MailItemRequestHandler {
     public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
         setJsonResponseHeaders(resp);
         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        String errorMessage = e.getMessage() != null ? e.getMessage() : INTERNAL_ERROR_MESSAGE;
-        resp.getWriter().write(err(errorMessage).toString());
+        resp.getWriter().write(err(INTERNAL_ERROR_MESSAGE).toString());
     }
 
     // ===== Вспомогательные методы =====

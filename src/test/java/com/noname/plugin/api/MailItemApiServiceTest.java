@@ -1,6 +1,7 @@
 package com.noname.plugin.api;
 
 import com.atlassian.jira.mail.Email;
+import com.noname.plugin.impl.MailItemApiServiceImpl;
 import com.noname.plugin.model.MailItem;
 import com.noname.plugin.service.MailItemService;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,7 +25,7 @@ class MailItemApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        api = new MailItemApiService(mailItemService);
+        api = new MailItemApiServiceImpl(mailItemService);
     }
 
     // ===== addEmail(Email) =====
