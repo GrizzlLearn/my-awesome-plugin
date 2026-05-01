@@ -1,41 +1,47 @@
 package com.noname.plugin.api;
 
-import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.mail.Email;
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.noname.plugin.model.MailItem;
 import com.noname.plugin.service.MailItemService;
 import org.jsoup.Jsoup;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 /**
  * Публичный API плагина для работы с письмами из внешних скриптов (ScriptRunner, Spock-тесты).
  * <p>
- * Типичный сценарий использования:
+ * Использование в Spock-тесте через {@code @PluginModule}:
  * <pre>
- *   def api = new MailItemApiService()
+ *   {@literal @}WithPlugin("com.noname.plugin.mail-catcher")
+ *   class MySpec extends Specification {
  *
- *   def email = new Email("recipient@example.com")
- *   email.setFrom("sender@example.com")
- *   email.setSubject("Тема")
- *   email.setBody("&lt;p&gt;Текст&lt;/p&gt;")
+ *       {@literal @}PluginModule
+ *       MailItemApiService api
  *
- *   def id = api.addEmail(email)         // сохранить и получить ID
- *   api.getEmailSubject(id) == "Тема"    // проверить отдельное поле
- *   api.getEmailBodyText(id) == "Текст"  // проверить текст без HTML
+ *       def "test"() {
+ *           def id = api.addEmail("from@test.com", "to@test.com", "Тема", "&lt;p&gt;Текст&lt;/p&gt;")
+ *           api.getEmailSubject(id) == "Тема"
+ *       }
+ *   }
  * </pre>
  * <p>
- * Класс использует {@link ComponentAccessor} для получения {@link MailItemService} из OSGi-контейнера,
- * поэтому должен создаваться только внутри запущенного JIRA-экземпляра.
+ * Использование через статический импорт (без {@code @PluginModule}):
+ * <pre>
+ *   import static com.noname.plugin.api.MailItemApiService.addEmail
+ *
+ *   def id = addEmail("from@test.com", "to@test.com", "Тема", "&lt;p&gt;Текст&lt;/p&gt;")
+ * </pre>
  */
+@Component
+@ExportAsService(MailItemApiService.class)
 public class MailItemApiService {
 
     private final MailItemService mailItemService;
 
-    public MailItemApiService() {
-        this.mailItemService = ComponentAccessor.getOSGiComponentInstanceOfType(MailItemService.class);
-    }
-
-    /** Конструктор для unit-тестирования без OSGi-контейнера. */
-    MailItemApiService(MailItemService mailItemService) {
+    @Inject
+    public MailItemApiService(MailItemService mailItemService) {
         this.mailItemService = mailItemService;
     }
 

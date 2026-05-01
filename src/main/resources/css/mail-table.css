@@ -546,6 +546,18 @@
     box-shadow: 0 0 0 3px rgba(239,68,68,0.2);
 }
 
+.delete-item-btn-confirming {
+    background: #dc2626;
+    color: white;
+    border-color: #b91c1c;
+    animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+.delete-item-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 640px) {

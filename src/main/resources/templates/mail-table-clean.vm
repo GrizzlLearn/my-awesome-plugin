@@ -92,7 +92,6 @@
 		const PAGE_SIZE = 10;
 		let currentOffset = 0;
 		let currentTags = [];
-		let savedScrollY = 0;
 		let preserveScroll = false;
 
 		// ===== Tag input =====
@@ -210,13 +209,19 @@
 
 		// ===== Load data =====
 		function loadData() {
-			savedScrollY = preserveScroll ? window.scrollY : 0;
+			const quiet = preserveScroll;
 			preserveScroll = false;
-			loading.style.display = "block";
-			content.style.display = "none";
-			emptyState.style.display = "none";
 			pagination.style.display = "none";
-			tableBody.innerHTML = '';
+			emptyState.style.display = "none";
+
+			if (quiet) {
+				content.style.opacity = '0.4';
+				content.style.pointerEvents = 'none';
+			} else {
+				tableBody.innerHTML = '';
+				loading.style.display = "block";
+				content.style.display = "none";
+			}
 
 			const params = new URLSearchParams();
 			currentTags.forEach(function (tag) { params.append('tag', tag); });
@@ -230,15 +235,20 @@
 					if (!ct || !ct.includes("application/json")) throw new Error("Response is not JSON");
 					return response.json();
 				})
-				.then(function (data) { processMailItems(data); })
+				.then(function (data) { processMailItems(data, quiet); })
 				.catch(function (error) {
 					console.error('Error fetching mail items:', error);
-					loading.innerHTML =
-						'<div style="color: #ef4444;">' +
-						'<p><strong>Error loading mail items</strong></p>' +
-						'<p style="font-size: 0.9rem; margin-top: 8px;">' +
-						(error.message || 'Please check your connection and try again.') +
-						'</p></div>';
+					if (quiet) {
+						content.style.opacity = '';
+						content.style.pointerEvents = '';
+					} else {
+						loading.innerHTML =
+							'<div style="color: #ef4444;">' +
+							'<p><strong>Error loading mail items</strong></p>' +
+							'<p style="font-size: 0.9rem; margin-top: 8px;">' +
+							(error.message || 'Please check your connection and try again.') +
+							'</p></div>';
+					}
 				});
 		}
 
@@ -296,22 +306,43 @@
 		}
 
 		// ===== Delete single item =====
-		function deleteMailItem(id) {
-			if (!confirm('Удалить это письмо?')) return;
-			fetch("$contextPath/plugins/servlet/mail-items/" + id, {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' }
-			})
-				.then(function (r) { return r.json(); })
-				.then(function (result) {
-					if (result.success) {
-						preserveScroll = true;
-						loadData();
-					} else {
-						alert('Ошибка при удалении: ' + (result.error || 'неизвестная ошибка'));
-					}
+		function deleteMailItem(id, btn) {
+			if (btn._confirming) {
+				clearTimeout(btn._confirmTimer);
+				btn._confirming = false;
+				btn.disabled = true;
+				btn.textContent = '⏳ Удаление...';
+				fetch("$contextPath/plugins/servlet/mail-items/" + id, {
+					method: 'DELETE',
+					headers: { 'Content-Type': 'application/json' }
 				})
-				.catch(function (e) { console.error('Error deleting item:', e); });
+					.then(function (r) { return r.json(); })
+					.then(function (result) {
+						if (result.success) {
+							preserveScroll = true;
+							loadData();
+						} else {
+							btn.disabled = false;
+							btn.textContent = 'Удалить';
+							btn.classList.remove('delete-item-btn-confirming');
+						}
+					})
+					.catch(function (e) {
+						console.error('Error deleting item:', e);
+						btn.disabled = false;
+						btn.textContent = 'Удалить';
+						btn.classList.remove('delete-item-btn-confirming');
+					});
+			} else {
+				btn._confirming = true;
+				btn.textContent = '⚠ Нажмите ещё раз';
+				btn.classList.add('delete-item-btn-confirming');
+				btn._confirmTimer = setTimeout(function () {
+					btn._confirming = false;
+					btn.textContent = 'Удалить';
+					btn.classList.remove('delete-item-btn-confirming');
+				}, 3000);
+			}
 		}
 
 		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
@@ -405,7 +436,7 @@
 			deleteItemBtn.textContent = 'Удалить';
 			deleteItemBtn.addEventListener('click', function (e) {
 				e.stopPropagation();
-				deleteMailItem(item.id);
+				deleteMailItem(item.id, deleteItemBtn);
 			});
 
 			bodyContainer.appendChild(htmlView);
@@ -424,8 +455,14 @@
 		}
 
 		// ===== Process items =====
-		function processMailItems(data) {
-			loading.style.display = "none";
+		function processMailItems(data, quiet) {
+			tableBody.innerHTML = '';
+			if (quiet) {
+				content.style.opacity = '';
+				content.style.pointerEvents = '';
+			} else {
+				loading.style.display = "none";
+			}
 
 			const items = data.items;
 			const total = data.total;
@@ -510,9 +547,6 @@
 				pageInfo.textContent = 'Страница ' + currentPage + ' из ' + totalPages;
 			}
 
-			requestAnimationFrame(function () {
-				window.scrollTo(0, savedScrollY);
-			});
 		}
 
 		loadData();

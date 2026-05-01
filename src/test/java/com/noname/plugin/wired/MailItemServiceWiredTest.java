@@ -1,5 +1,6 @@
 package com.noname.plugin.wired;
 
+import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.mail.Email;
 import com.atlassian.plugins.osgi.test.AtlassianPluginsTestRunner;
 import com.noname.plugin.api.MailItemApiService;
@@ -21,7 +22,7 @@ public class MailItemServiceWiredTest {
 
     @Before
     public void setUp() {
-        api = new MailItemApiService();
+        api = ComponentAccessor.getOSGiComponentInstanceOfType(MailItemApiService.class);
         api.deleteAllEmails();
     }
 

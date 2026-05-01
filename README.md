@@ -124,65 +124,50 @@ POST и DELETE требуют прав **системного администр
 
 ## Публичный API (`MailItemApiService`)
 
-Класс экспортируется через OSGi и доступен из ScriptRunner и wired-тестов.
+`MailItemApiService` зарегистрирован как OSGi-сервис (`@ExportAsService`) и доступен из ScriptRunner и wired-тестов через `@PluginModule`.
 
-### Добавление письма
-
-```groovy
-import com.noname.plugin.api.MailItemApiService
-import com.atlassian.jira.mail.Email
-
-def api = new MailItemApiService()
-
-// Через Email-объект
-def email = new Email("recipient@example.com")
-email.setFrom("sender@example.com")
-email.setSubject("Тема")
-email.setBody("<p>Текст письма</p>")
-def id = api.addEmail(email)
-
-// Краткая форма (без cc/bcc)
-def id2 = api.addEmail("sender@example.com", "recipient@example.com", "Тема", "<p>Текст</p>")
-
-// С cc/bcc
-def id3 = api.addEmail("from@ex.com", "to@ex.com", "cc@ex.com", "bcc@ex.com", "Тема", "<p>Текст</p>")
-```
-
-### Проверка полей письма
+### Методы
 
 ```groovy
-api.getEmailFrom(id)     // "sender@example.com"
-api.getEmailTo(id)       // "recipient@example.com"
-api.getEmailCc(id)       // "cc@example.com" или null
-api.getEmailBcc(id)      // "bcc@example.com" или null
-api.getEmailSubject(id)  // "Тема"
-api.getEmailBodyHtml(id) // "<p>Текст письма</p>"
-api.getEmailBodyText(id) // "Текст письма" — без HTML-тегов (через Jsoup)
+// Добавление письма — возвращает UUID для последующей проверки
+api.addEmail(email)                                          // Email-объект
+api.addEmail(from, to, subject, body)                       // краткая форма
+api.addEmail(from, to, cc, bcc, subject, body)              // с cc/bcc
+
+// Чтение полей по UUID
+api.getEmailFrom(id)      // "sender@example.com"
+api.getEmailTo(id)        // "recipient@example.com"
+api.getEmailCc(id)        // "cc@example.com" или null
+api.getEmailBcc(id)       // "bcc@example.com" или null
+api.getEmailSubject(id)   // "Тема"
+api.getEmailBodyHtml(id)  // "<p>Текст</p>"
+api.getEmailBodyText(id)  // "Текст" — без HTML-тегов (через Jsoup)
+
+// Управление коллекцией
+api.getEmailCount()       // количество писем в базе
+api.deleteAllEmails()     // true, если что-то удалено
+api.loadTestData()        // создаёт 5 тестовых писем
 ```
 
-### Управление коллекцией
-
-```groovy
-api.getEmailCount()    // Int — количество писем в базе
-api.deleteAllEmails()  // Boolean — true, если что-то удалено
-api.loadTestData()     // создаёт 5 тестовых писем
-```
-
-Все методы бросают `IllegalArgumentException`, если письмо с переданным ID не найдено.
+Все `getEmail*` бросают `IllegalArgumentException`, если письмо с переданным ID не найдено.
 
 ---
 
-## Использование в Spock-тестах (wired)
+## Использование в Spock-тестах (wired, ScriptRunner)
+
+`@WithPlugin` загружает плагин, `@PluginModule` инжектирует `MailItemApiService` из OSGi-реестра.
 
 ```groovy
 import com.noname.plugin.api.MailItemApiService
 import com.atlassian.jira.mail.Email
 
+@WithPlugin("com.noname.plugin.mail-catcher")
 class EmailTemplateSpec extends Specification {
 
-    def api = new MailItemApiService()
+    @PluginModule
+    MailItemApiService api
 
-    def cleanup() {
+    def setup() {
         api.deleteAllEmails()
     }
 
@@ -202,8 +187,56 @@ class EmailTemplateSpec extends Specification {
         api.getEmailFrom(id)     == "noreply@company.com"
         api.getEmailTo(id)       == "user@company.com"
     }
+
+    def "письмо с cc и bcc сохраняет все адреса"() {
+        when:
+        def id = api.addEmail("from@company.com", "to@company.com",
+                "cc@company.com", "bcc@company.com",
+                "Уведомление", "<p>Текст</p>")
+
+        then:
+        api.getEmailCc(id)  == "cc@company.com"
+        api.getEmailBcc(id) == "bcc@company.com"
+    }
+
+    def "количество писем увеличивается после добавления"() {
+        when:
+        api.addEmail("a@test.com", "x@test.com", "Письмо 1", "<p>Тело</p>")
+        api.addEmail("b@test.com", "y@test.com", "Письмо 2", "<p>Тело</p>")
+
+        then:
+        api.getEmailCount() == 2
+    }
+
+    def "deleteAllEmails очищает все письма"() {
+        given:
+        api.addEmail("a@test.com", "x@test.com", "Тема", "<p>Тело</p>")
+
+        when:
+        api.deleteAllEmails()
+
+        then:
+        api.getEmailCount() == 0
+    }
+
+    def "getEmailBodyText возвращает текст без HTML-тегов"() {
+        when:
+        def id = api.addEmail("f@test.com", "t@test.com",
+                "Тема", "<h1>Заголовок</h1><p>Абзац с <strong>текстом</strong>.</p>")
+
+        then:
+        api.getEmailBodyText(id) == "Заголовок Абзац с текстом."
+    }
+
+    def "getEmailBodyHtml возвращает тело письма с HTML-тегами"() {
+        when:
+        def id = api.addEmail("f@test.com", "t@test.com",
+                "Тема", "<h1>Заголовок</h1><p>Абзац с <strong>текстом</strong>.</p>")
+
+        then:
+        api.getEmailBodyHtml(id) == "<h1>Заголовок</h1><p>Абзац с <strong>текстом</strong>.</p>"
+    }
 }
-```
 
 ---
 
