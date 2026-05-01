@@ -27,8 +27,9 @@
 		<div class="tag-input-container" id="tag-input-container">
 			<div id="tags-list"></div>
 			<input type="text" id="tag-input" class="tag-input"
+			       aria-label="Поиск писем"
 			       placeholder="Введите запрос и нажмите Enter..." />
-			<button id="clear-search-btn" class="clear-search-btn" title="Очистить всё" style="display:none;">&#x2715;</button>
+			<button id="clear-search-btn" class="clear-search-btn" title="Очистить всё" aria-label="Очистить поиск" style="display:none;">&#x2715;</button>
 		</div>
 	</div>
 	<div id="loading" class="loading">
@@ -38,7 +39,7 @@
 
 	<div id="mail-items-content" style="display: none;">
 		<div class="table-container">
-			<table class="mail-table">
+			<table class="mail-table" aria-label="Список писем">
 				<thead>
 				<tr>
 					<th class="col-from">От</th>
@@ -61,7 +62,7 @@
 	</div>
 
 	<div id="empty-state" class="empty-state" style="display: none;">
-		<svg class="empty-icon" fill="currentColor" viewBox="0 0 20 20">
+		<svg class="empty-icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
 			<path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
 			<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
 		</svg>
@@ -103,6 +104,7 @@
 				chip.title = tag;
 
 				const label = document.createElement('span');
+				label.className = 'tag-chip-label';
 				label.textContent = tag;
 
 				const removeBtn = document.createElement('button');
