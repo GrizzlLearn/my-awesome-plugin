@@ -64,20 +64,20 @@ public class MailItemService {
     /**
      * Создаёт письмо из JSON-объекта (используется HTTP-эндпоинтом {@code /add-email}).
      * Ожидаемые поля: {@code from}, {@code to}, {@code cc}, {@code bcc}, {@code subject},
-     * {@code body}, {@code attachmentsName}. Хотя бы одно из полей получателя (to/cc/bcc) обязательно.
+     * {@code body}, {@code attachmentsName}. Поле {@code to} обязательно — требование конструктора {@code Email}.
      *
      * @param json JSON-объект с полями письма
      * @return UUID созданной записи
      * @throws JSONException            если JSON некорректен
-     * @throws IllegalArgumentException если все поля получателя пусты
+     * @throws IllegalArgumentException если поле {@code to} пустое или отсутствует
      */
     public String createMailItemFromJson(JSONObject json) throws JSONException {
         String to = json.optString("to", null);
         String cc = json.optString("cc", null);
         String bcc = json.optString("bcc", null);
 
-        if ((to == null || to.isEmpty()) && (cc == null || cc.isEmpty()) && (bcc == null || bcc.isEmpty())) {
-            throw new IllegalArgumentException("At least one recipient field (to, cc, bcc) must be provided");
+        if (to == null || to.isEmpty()) {
+            throw new IllegalArgumentException("Field 'to' is required");
         }
 
         MailItem mailItem = new MailItem(to, cc, bcc);
