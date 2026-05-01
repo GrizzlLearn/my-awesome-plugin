@@ -1,18 +1,17 @@
 package com.noname.plugin.servlet.util;
 
 import com.noname.plugin.service.MailItemService;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Вспомогательный класс для инициализации тестовых данных при необходимости.
  * Отделяет логику создания тестовых данных от обработки сервлетов.
- * @author dl
- * @date 11.08.2025 22:35
  */
 public class TestDataInitializer {
-    private static final Logger log = Logger.getLogger(TestDataInitializer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(TestDataInitializer.class);
 
     private final MailItemService mailItemService;
 
@@ -25,7 +24,7 @@ public class TestDataInitializer {
      * @return true, если тестовые данные были созданы, false, если данные уже существовали
      */
     public boolean initializeIfEmpty() {
-        if (mailItemService.getAllMailItems().isEmpty()) {
+        if (mailItemService.countMailItems() == 0) {
             log.info("No mail items found, creating initial test data");
             return mailItemService.loadTestData();
         }
@@ -48,7 +47,7 @@ public class TestDataInitializer {
      * @return true, если почтовые элементы отсутствуют
      */
     public boolean isDataEmpty() {
-        return mailItemService.getAllMailItems().isEmpty();
+        return mailItemService.countMailItems() == 0;
     }
 
     /**
@@ -56,6 +55,6 @@ public class TestDataInitializer {
      * @return количество существующих почтовых элементов
      */
     public int getMailItemsCount() {
-        return mailItemService.getAllMailItems().size();
+        return mailItemService.countMailItems();
     }
 }

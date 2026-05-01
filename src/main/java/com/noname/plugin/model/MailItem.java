@@ -18,8 +18,8 @@ import lombok.*;
 @Setter
 public class MailItem extends Email {
 
-    /** Уникальный идентификатор письма. Генерируется один раз при создании объекта. */
-    private final String id = java.util.UUID.randomUUID().toString();
+    /** Уникальный идентификатор письма. Соответствует UUID записи в базе данных. */
+    private String id;
 
     /** Имена вложений через запятую. {@code null}, если вложений нет. */
     private String attachmentsName;

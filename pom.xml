@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>mail-catcher</artifactId>
-    <version>0.9.5.5</version>
+    <version>0.9.5.6</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
@@ -153,6 +153,7 @@
                     </pluginArtifacts>
                     -->
                     <enableQuickReload>true</enableQuickReload>
+                    <jvmArgs>--add-opens=java.base/sun.util.calendar=ALL-UNNAMED</jvmArgs>
 
 
                     <!-- See here for an explanation of default instructions: -->

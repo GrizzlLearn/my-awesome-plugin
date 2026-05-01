@@ -28,6 +28,7 @@ public class MailItemMapper {
         }
 
         MailItem mailItem = new MailItem(to, cc, bcc, entity.getAttachmentsName());
+        mailItem.setId(entity.getUuid());
         mailItem.setFrom(entity.getFrom());
         mailItem.setSubject(entity.getSubject());
         mailItem.setBody(entity.getBody());
