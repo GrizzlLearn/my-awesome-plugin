@@ -340,7 +340,7 @@ class MailItemServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> service.deleteAllMailItemsSafe());
-        assertTrue(ex.getMessage().contains("Ошибка при удалении"));
+        assertTrue(ex.getMessage().contains("Failed to delete all mail items"));
     }
 
     // ===== loadTestData =====

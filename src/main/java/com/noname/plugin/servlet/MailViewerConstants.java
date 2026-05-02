@@ -6,12 +6,12 @@ package com.noname.plugin.servlet;
  */
 public final class MailViewerConstants {
 
-    // --- URL-паттерны (GET) ---
+    // --- GET-маршруты ---
 
-    /** Базовый путь без слеша — используется для редиректа на {@link #MAIL_ITEMS_ROOT}. */
+    /** Базовый путь без завершающего слеша — инициирует редирект на {@link #MAIL_ITEMS_ROOT}. */
     public static final String MAIL_ITEMS_BASE = "/mail-items";
 
-    /** Корневой путь просмотрщика, отдаёт HTML-таблицу. */
+    /** Корневой путь просмотрщика; отдаёт HTML-таблицу. */
     public static final String MAIL_ITEMS_ROOT = "/mail-items/";
 
     /** Путь JSON-эндпоинта для получения всех писем. */
@@ -28,15 +28,15 @@ public final class MailViewerConstants {
     /** Эндпоинт принудительного создания тестовых писем. */
     public static final String CREATE_TEST_DATA_ENDPOINT = "/create-test-data";
 
-    /** Эндпоинт добавления письма через JSON-тело запроса. */
+    /** Эндпоинт добавления письма через тело JSON-запроса. */
     public static final String ADD_EMAIL_ENDPOINT = "/add-email";
 
-    // --- Пути к CSS-файлам (в URL) ---
+    // --- Пути CSS-файлов в URL ---
 
     public static final String CSS_MAIN_PATH = "/css/mail-main.css";
     public static final String CSS_TABLE_PATH = "/css/mail-table.css";
 
-    // --- Пути к ресурсам в classpath ---
+    // --- Пути ресурсов в classpath ---
 
     public static final String TABLE_TEMPLATE_PATH = "templates/mail-table-clean.vm";
     public static final String CSS_MAIN_RESOURCE  = "css/mail-main.css";
@@ -44,7 +44,7 @@ public final class MailViewerConstants {
 
     // --- Ключи WebResource ---
 
-    /** Ключ ресурсного модуля плагина для подключения CSS через PageBuilderService. */
+    /** Ключ модуля ресурсов для подключения CSS через PageBuilderService. */
     public static final String MAIL_TABLE_RESOURCES = "com.noname.plugin:mail-table-resources";
 
     // --- Content-Type ---
@@ -69,7 +69,7 @@ public final class MailViewerConstants {
     public static final String TEST_DATA_SUCCESS_MESSAGE   = "Test data created successfully";
     public static final String TEST_DATA_ERROR_MESSAGE     = "Failed to create test data";
 
-    // --- Сообщения об отсутствии данных ---
+    // --- Сообщения «не найдено» ---
 
     public static final String EMAIL_NOT_FOUND_MESSAGE = "Mail item not found";
 

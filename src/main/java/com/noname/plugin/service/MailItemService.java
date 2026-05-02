@@ -19,8 +19,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Сервис для работы с письмами: создание, чтение, удаление, загрузка тестовых данных.
- * Единственная точка доступа к таблице {@code MAIL_ITEM_TABLE} через Active Objects.
+ * Сервис для операций с письмами: создание, чтение, удаление и загрузка тестовых данных.
+ * Единственная точка доступа к {@code MAIL_ITEM_TABLE} через Active Objects.
  */
 @Component
 public class MailItemService {
@@ -37,7 +37,7 @@ public class MailItemService {
      * Сохраняет письмо в базе данных и возвращает его UUID.
      * Если передан {@link MailItem}, дополнительно сохраняет вложения и сырые заголовки.
      *
-     * @param email письмо для сохранения
+     * @param email сохраняемое письмо
      * @return UUID созданной записи
      * @throws IllegalArgumentException если {@code email} равен {@code null}
      */
@@ -125,14 +125,14 @@ public class MailItemService {
 
     /**
      * Возвращает страницу писем в виде JSON-строки с поддержкой поиска и пагинации.
-     * Каждый тег должен встречаться хотя бы в одном из полей письма (from, to, subject, body) —
-     * AND-логика: письмо попадает в результат только если соответствует всем переданным тегам.
+     * Каждый тег должен совпадать хотя бы с одним полем письма (from, to, subject, body) —
+     * семантика AND: письмо включается только если соответствует всем переданным тегам.
      *
-     * @param tags   массив поисковых тегов или {@code null} для возврата всех писем
-     * @param offset смещение (индекс первого элемента страницы)
-     * @param limit  максимальное количество элементов на странице (0 — вернуть всё)
+     * @param tags   массив тегов поиска или {@code null} для возврата всех писем
+     * @param offset нулевой индекс первого элемента страницы
+     * @param limit  максимальное количество элементов на странице (0 — вернуть все)
      * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}
-     * @throws JSONException если сборка JSON не удалась
+     * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
     public String getAllMailItemsAsJson(String[] tags, int offset, int limit) throws JSONException {
         boolean hasSearch = tags != null
@@ -152,7 +152,7 @@ public class MailItemService {
                         Query.select().limit(safeLimit).offset(safeOffset)));
             }
         } else {
-            // In-memory filtering with a cap to avoid OOM on large tables
+            // Фильтрация в памяти с ограничением выборки для защиты от OOM на больших таблицах
             MailItemEntity[] all = ao.find(MailItemEntity.class, Query.select().limit(5000));
             List<MailItemEntity> filtered = Arrays.stream(all)
                     .filter(e -> matchesAllTags(e, tags))
@@ -188,8 +188,8 @@ public class MailItemService {
     /**
      * Удаляет все письма из базы данных.
      *
-     * @return {@code true}, если хотя бы одна запись была удалена; {@code false}, если таблица была пуста
-     * @throws RuntimeException если удаление завершилось с ошибкой
+     * @return {@code true} если удалена хотя бы одна запись; {@code false} если таблица была пустой
+     * @throws RuntimeException если удаление завершилось ошибкой
      */
     public boolean deleteAllMailItemsSafe() {
         try {
@@ -200,7 +200,7 @@ public class MailItemService {
             }
             return false;
         } catch (Exception e) {
-            throw new RuntimeException("Ошибка при удалении всех объектов email", e);
+            throw new RuntimeException("Failed to delete all mail items", e);
         }
     }
 
@@ -208,7 +208,7 @@ public class MailItemService {
      * Удаляет письмо по UUID.
      *
      * @param uuid идентификатор письма
-     * @return {@code true}, если письмо найдено и удалено; {@code false}, если письмо не найдено
+     * @return {@code true} если письмо найдено и удалено; {@code false} если не найдено
      */
     public boolean deleteMailItemById(String uuid) {
         MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
@@ -218,11 +218,11 @@ public class MailItemService {
     }
 
     /**
-     * Добавляет 5 тестовых писем с HTML-содержимым.
-     * Нумерация начинается с {@code (текущее_количество + 1)}, чтобы не конфликтовать с существующими записями.
+     * Создаёт 5 тестовых писем с HTML-содержимым.
+     * Нумерация начинается с {@code (текущее количество + 1)} во избежание конфликтов с существующими записями.
      *
-     * @return {@code true} при успехе
-     * @throws RuntimeException если создание записей завершилось с ошибкой
+     * @return {@code true} при успешном выполнении
+     * @throws RuntimeException если создание записей завершилось ошибкой
      */
     public boolean loadTestData() {
         try {
@@ -252,7 +252,7 @@ public class MailItemService {
 
             return true;
         } catch (Exception e) {
-            throw new RuntimeException("Ошибка при создании тестовых данных", e);
+            throw new RuntimeException("Failed to create test data", e);
         }
     }
 

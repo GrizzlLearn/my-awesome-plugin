@@ -1,15 +1,16 @@
 package com.noname.plugin;
 
-import org.junit.Test;
 import com.noname.plugin.api.MyPluginComponent;
 import com.noname.plugin.impl.MyPluginComponentImpl;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class MyComponentUnitTest {
+class MyComponentUnitTest {
+
     @Test
-    public void testMyName() {
+    void testMyName() {
         MyPluginComponent component = new MyPluginComponentImpl(null);
-        assertEquals("names do not match!", "myComponent", component.getName());
+        assertEquals("myComponent", component.getName(), "names do not match!");
     }
 }

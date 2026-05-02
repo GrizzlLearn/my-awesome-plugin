@@ -21,12 +21,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Отвечает за генерацию HTML-ответов и отдачу статических ресурсов (CSS).
+ * Отвечает за генерацию HTML-ответов и раздачу статических ресурсов (CSS).
  * <p>
- * Шаблоны загружаются из classpath ресурсов плагина. Переменные вида {@code $contextPath}
- * заменяются вручную (без полноценного Velocity-движка), что достаточно для текущего набора шаблонов.
- * CSS-файлы отдаются напрямую из classpath, минуя стандартный механизм WebResource,
- * чтобы они были доступны без полной JIRA-декорации страницы.
+ * Шаблоны загружаются из classpath-ресурсов плагина. Переменные, такие как {@code $contextPath},
+ * подставляются вручную (без полноценного движка Velocity), чего достаточно для текущего набора шаблонов.
+ * CSS-файлы раздаются напрямую из classpath, минуя стандартный механизм WebResource,
+ * что позволяет использовать их без полной декорации страницы JIRA.
  */
 @Component
 public class MailItemPageRenderer {
@@ -44,12 +44,12 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Отдаёт страницу таблицы писем.
-     * Подключает CSS через {@link PageBuilderService}, загружает {@code .vm}-шаблон и заменяет переменные.
+     * Отдаёт страницу с таблицей писем.
+     * Регистрирует CSS через {@link PageBuilderService}, загружает шаблон {@code .vm} и подставляет переменные.
      *
-     * @param req  HTTP-запрос (нужен для получения contextPath и baseUrl)
+     * @param req  HTTP-запрос (используется для получения contextPath и baseUrl)
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void renderTablePage(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
@@ -75,11 +75,11 @@ public class MailItemPageRenderer {
     }
 
     /**
-     * Отдаёт CSS-файл из classpath по URI запроса.
+     * Раздаёт CSS-файл из classpath по URI запроса.
      *
      * @param req  HTTP-запрос (URI используется для определения нужного файла)
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void serveCssFile(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURI = req.getRequestURI();
@@ -122,12 +122,12 @@ public class MailItemPageRenderer {
 
     /**
      * Выполняет простую подстановку переменных в шаблоне.
-     * Полноценный Velocity-движок не используется — текущих переменных достаточно для шаблона.
+     * Полноценный движок Velocity не используется — текущего набора переменных достаточно для шаблона.
      */
     private String processVelocityTemplate(String vmContent, HttpServletRequest req) {
         return vmContent
                 .replace("$webResourceManager.requireResource(\"com.noname.plugin:mail-table-resources\")",
-                        "<!-- CSS подключен через WebResourceManager в сервлете -->")
+                        "<!-- CSS included via WebResourceManager in servlet -->")
                 .replace("$contextPath", req.getContextPath())
                 .replace("$baseUrl", buildBaseUrl(req));
     }

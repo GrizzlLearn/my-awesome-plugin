@@ -20,8 +20,8 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
  * Обработчик HTTP-запросов для операций с письмами.
- * Содержит по одному методу на каждую операцию — читает запрос, вызывает сервис, формирует JSON-ответ.
- * Маршрутизация (какой метод вызвать) находится в {@link com.noname.plugin.servlet.MailViewerServlet}.
+ * Содержит один метод на операцию — читает запрос, вызывает сервис и записывает JSON-ответ.
+ * Маршрутизация (какой метод вызывать) находится в {@link com.noname.plugin.servlet.MailViewerServlet}.
  */
 @Component
 public class MailItemRequestHandler {
@@ -37,13 +37,13 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отдаёт письма в виде JSON с поддержкой поиска и пагинации.
-     * Принимает query-параметры: {@code search}, {@code offset}, {@code limit}.
+     * Возвращает письма в виде JSON с поддержкой поиска и пагинации.
+     * Принимает параметры запроса: {@code tag}, {@code offset}, {@code limit}.
      * Соответствует GET {@code /mail-items/data}.
      *
-     * @param req  HTTP-запрос (используется для чтения query-параметров)
+     * @param req  HTTP-запрос (используется для чтения параметров)
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleDataRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(JSON_CONTENT_TYPE);
@@ -67,7 +67,7 @@ public class MailItemRequestHandler {
      * Соответствует POST {@code /delete-all}.
      *
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleDeleteAllRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -87,9 +87,9 @@ public class MailItemRequestHandler {
      * Удаляет письмо по UUID.
      * Соответствует DELETE {@code /mail-items/{uuid}}.
      *
-     * @param uuid UUID письма для удаления
+     * @param uuid UUID удаляемого письма
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleDeleteByIdRequest(String uuid, HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -111,11 +111,11 @@ public class MailItemRequestHandler {
 
     /**
      * Возвращает результат создания тестовых данных.
-     * Соответствует POST {@code /create-test-data}. Сама генерация данных выполнена до вызова этого метода.
+     * Соответствует POST {@code /create-test-data}. Генерация данных происходит до вызова этого метода.
      *
      * @param resp    HTTP-ответ
-     * @param created {@code true}, если данные были успешно созданы
-     * @throws IOException если возникла ошибка записи ответа
+     * @param created {@code true} если данные успешно созданы
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleCreateTestDataRequest(HttpServletResponse resp, boolean created) throws IOException {
         setJsonResponseHeaders(resp);
@@ -131,14 +131,14 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Добавляет письмо, переданное в теле запроса в формате JSON.
+     * Добавляет письмо из JSON-тела запроса.
      * Соответствует POST {@code /add-email}.
      * Ожидаемые поля JSON: {@code from}, {@code to}, {@code cc}, {@code bcc}, {@code subject}, {@code body}.
      * Возвращает UUID созданной записи в поле {@code id}.
      *
      * @param req  HTTP-запрос с JSON-телом
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка чтения запроса или записи ответа
+     * @throws IOException если чтение запроса или запись ответа завершились ошибкой
      */
     public void handleAddEmailRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -178,10 +178,10 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отвечает 404 для неизвестных эндпоинтов.
+     * Отвечает кодом 404 для неизвестных эндпоинтов.
      *
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleNotFoundRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -190,10 +190,10 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отвечает 403 для пользователей без прав администратора.
+     * Отвечает кодом 403 для пользователей без прав администратора.
      *
      * @param resp HTTP-ответ
-     * @throws IOException если возникла ошибка записи ответа
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleForbiddenRequest(HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
@@ -202,11 +202,11 @@ public class MailItemRequestHandler {
     }
 
     /**
-     * Отвечает 500 с сообщением из исключения.
+     * Отвечает кодом 500 со стандартным сообщением об ошибке; детали исключения остаются только в логах.
      *
      * @param resp HTTP-ответ
-     * @param e    исключение, ставшее причиной ошибки
-     * @throws IOException если возникла ошибка записи ответа
+     * @param e    исключение, вызвавшее ошибку
+     * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
         setJsonResponseHeaders(resp);

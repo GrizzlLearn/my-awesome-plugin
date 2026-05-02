@@ -1,9 +1,6 @@
 package com.noname.plugin.servlet;
 
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.sal.api.user.UserKey;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.jira.component.ComponentAccessor;
 import com.noname.plugin.servlet.handler.MailItemRequestHandler;
 import com.noname.plugin.servlet.renderer.MailItemPageRenderer;
 import com.noname.plugin.servlet.util.TestDataInitializer;
@@ -20,21 +17,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.noname.plugin.servlet.MailViewerConstants.*;
 
 /**
- * Точка входа HTTP для просмотрщика писем плагина.
- * <p>
+ * HTTP-точка входа для плагина просмотра почты.
  * Маршрутизирует GET-запросы к {@link MailItemPageRenderer} (HTML/CSS) и
- * к {@link MailItemRequestHandler} (JSON-данные), а POST-запросы — к {@link MailItemRequestHandler}.
- * Сам сервлет не содержит бизнес-логики: только маршрутизация и проверка авторизации.
- * <p>
+ * к {@link MailItemRequestHandler} (JSON-данные), POST-запросы — к {@link MailItemRequestHandler}.
+ * Не содержит бизнес-логики — только маршрутизация и проверка прав.
+ *
  * Доступные маршруты:
  * <ul>
- *   <li>GET  {@code /mail-items/}       — таблица писем (HTML)</li>
- *   <li>GET  {@code /mail-items/data}   — все письма в JSON</li>
- *   <li>GET  {@code /mail-items/table}  — таблица писем (HTML, альтернативный путь)</li>
+ *   <li>GET    {@code /mail-items/}       — таблица писем (HTML)</li>
+ *   <li>GET    {@code /mail-items/data}   — все письма в виде JSON</li>
+ *   <li>GET    {@code /mail-items/table}  — таблица писем (HTML, альтернативный путь)</li>
  *   <li>POST   {@code /delete-all}        — удалить все письма</li>
  *   <li>POST   {@code /create-test-data}  — создать тестовые данные</li>
- *   <li>POST   {@code /add-email}         — добавить письмо через JSON</li>
- *   <li>DELETE {@code /mail-items/{uuid}} — удалить одно письмо по ID</li>
+ *   <li>POST   {@code /add-email}         — добавить письмо через JSON-тело запроса</li>
+ *   <li>DELETE {@code /mail-items/{uuid}} — удалить одно письмо по идентификатору</li>
  * </ul>
  */
 public class MailViewerServlet extends HttpServlet {
@@ -44,22 +40,22 @@ public class MailViewerServlet extends HttpServlet {
     private final MailItemRequestHandler requestHandler;
     private final MailItemPageRenderer pageRenderer;
     private final TestDataInitializer testDataInitializer;
+    private final AuthorizationService authorizationService;
 
     @Inject
     public MailViewerServlet(MailItemRequestHandler requestHandler,
                              MailItemPageRenderer pageRenderer,
-                             TestDataInitializer testDataInitializer) {
+                             TestDataInitializer testDataInitializer,
+                             AuthorizationService authorizationService) {
         this.requestHandler = checkNotNull(requestHandler);
         this.pageRenderer = checkNotNull(pageRenderer);
         this.testDataInitializer = checkNotNull(testDataInitializer);
+        this.authorizationService = checkNotNull(authorizationService);
     }
 
     /**
      * Маршрутизирует GET-запросы по URI.
-     * Запрос на базовый URL без слеша перенаправляется на URL со слешем.
-     *
-     * @throws ServletException если возникла ошибка сервлета
-     * @throws IOException      если возникла ошибка записи ответа
+     * Запрос на базовый URL без завершающего слеша перенаправляется на URL со слешем.
      */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -76,7 +72,7 @@ public class MailViewerServlet extends HttpServlet {
                 return;
             }
 
-            if (!isUserAuthorized()) {
+            if (!authorizationService.isSystemAdmin()) {
                 handleUnauthorizedRequest(resp);
                 return;
             }
@@ -100,13 +96,11 @@ public class MailViewerServlet extends HttpServlet {
     /**
      * Маршрутизирует POST-запросы по pathInfo.
      * Все POST-операции требуют прав системного администратора JIRA.
-     *
-     * @throws IOException если возникла ошибка записи ответа
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            if (!isUserAuthorized()) {
+            if (!authorizationService.isSystemAdmin()) {
                 handleUnauthorizedRequest(resp);
                 return;
             }
@@ -134,13 +128,11 @@ public class MailViewerServlet extends HttpServlet {
      * Маршрутизирует DELETE-запросы для удаления письма по UUID.
      * Путь: DELETE {@code /mail-items/{uuid}}.
      * Требует прав системного администратора JIRA.
-     *
-     * @throws IOException если возникла ошибка записи ответа
      */
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
-            if (!isUserAuthorized()) {
+            if (!authorizationService.isSystemAdmin()) {
                 handleUnauthorizedRequest(resp);
                 return;
             }
@@ -160,26 +152,11 @@ public class MailViewerServlet extends HttpServlet {
     }
 
     /**
-     * Проверяет, является ли текущий пользователь системным администратором JIRA.
-     *
-     * @return {@code true}, если пользователь вошёл в систему и имеет права системного администратора
-     */
-    private boolean isUserAuthorized() {
-        UserManager userManager = ComponentAccessor.getOSGiComponentInstanceOfType(UserManager.class);
-        if (userManager == null) return false;
-        UserKey userKey = userManager.getRemoteUserKey();
-        ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-        return user != null && userManager.isSystemAdmin(userKey);
-    }
-
-    /**
      * Обрабатывает запросы от неавторизованных пользователей.
-     * Незалогиненных редиректит на страницу входа; залогиненных без прав — возвращает 403.
-     *
-     * @throws IOException если возникла ошибка записи ответа
+     * Неаутентифицированных перенаправляет на страницу входа; аутентифицированным без прав возвращает 403.
      */
     private void handleUnauthorizedRequest(HttpServletResponse resp) throws IOException {
-        ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+        ApplicationUser user = authorizationService.getLoggedInUser();
         if (user == null) {
             resp.sendRedirect(JIRA_LOGIN_URL);
         } else {
