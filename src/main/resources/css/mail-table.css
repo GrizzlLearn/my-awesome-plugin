@@ -223,7 +223,6 @@
 .detail-row > td {
     padding: 0 !important;
     border-bottom: 0 !important;
-    overflow: hidden;
 }
 
 .detail-row.expanded > td {

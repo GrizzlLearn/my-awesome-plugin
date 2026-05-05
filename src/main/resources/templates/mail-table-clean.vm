@@ -7,7 +7,7 @@
 	<meta name="admin.active.section" content="admin_plugins_menu/mail_catcher_config_section">
 	<meta name="admin.active.tab" content="web.item.mail.viewer.servlet">
 	<title>Mail Items Dashboard</title>
-	<link rel="stylesheet" type="text/css" href="css/mail-table.css">
+	<link rel="stylesheet" type="text/css" href="$contextPath/download/resources/com.noname.plugin.mail-catcher/css/mail-table.css">
 </head>
 <body>
 <div class="container">
@@ -21,7 +21,7 @@
 		<button id="delete-all-btn" class="delete-btn">
 			🗑️ Delete All Items
 		</button>
-		<a href="data" target="_blank" class="json-btn">📊 View JSON</a>
+		<a href="$contextPath/plugins/servlet/mail-items/data" target="_blank" class="json-btn">📊 View JSON</a>
 	</div>
 	<div class="search-bar">
 		<div class="tag-input-container" id="tag-input-container">
