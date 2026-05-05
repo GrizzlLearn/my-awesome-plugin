@@ -230,13 +230,9 @@
 }
 
 .detail-wrapper {
-    max-height: 0;
+    height: 0;
     overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.detail-row.expanded .detail-wrapper {
-    max-height: 2000px;
+    transition: height 0.3s ease;
 }
 
 /* ===== EMAIL VIEW ===== */
@@ -587,4 +583,18 @@
     .email-field-label { width: 60px; }
 
     .source-btn { display: block; margin-top: 14px; text-align: center; }
+}
+
+@media (forced-colors: active) {
+    .create-btn:focus,
+    .delete-btn:focus,
+    .json-btn:focus,
+    .source-btn:focus,
+    .tag-chip-remove:focus,
+    .tag-input:focus,
+    .clear-search-btn:focus,
+    .page-btn:focus:not(:disabled),
+    .delete-item-btn:focus {
+        outline: 2px solid ButtonText;
+    }
 }

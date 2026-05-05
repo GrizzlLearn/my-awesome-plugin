@@ -36,6 +36,10 @@
 		<div class="spinner"></div>
 		<p>Loading mail items...</p>
 	</div>
+	<div id="load-error" class="load-error" style="display:none">
+		<p><strong>Error loading mail items</strong></p>
+		<p id="load-error-message"></p>
+	</div>
 
 	<div id="mail-items-content" style="display: none;">
 		<div class="table-container">
@@ -74,6 +78,8 @@
 <script>
 	document.addEventListener("DOMContentLoaded", function () {
 		const loading = document.getElementById("loading");
+		const loadError = document.getElementById("load-error");
+		const loadErrorMessage = document.getElementById("load-error-message");
 		const content = document.getElementById("mail-items-content");
 		const emptyState = document.getElementById("empty-state");
 		const emptyTitle = document.getElementById("empty-title");
@@ -224,6 +230,7 @@
 			} else {
 				tableBody.innerHTML = '';
 				loading.style.display = "block";
+				loadError.style.display = "none";
 				content.style.display = "none";
 			}
 
@@ -246,21 +253,35 @@
 						content.style.opacity = '';
 						content.style.pointerEvents = '';
 					} else {
-						loading.innerHTML =
-							'<div style="color: #ef4444;">' +
-							'<p><strong>Error loading mail items</strong></p>' +
-							'<p style="font-size: 0.9rem; margin-top: 8px;">' +
-							(error.message || 'Please check your connection and try again.') +
-							'</p></div>';
+						loading.style.display = 'none';
+						loadErrorMessage.textContent = error.message || 'Please check your connection and try again.';
+						loadError.style.display = 'block';
 					}
 				});
+		}
+
+		function getAtlToken() {
+			var meta = document.querySelector('meta[name="atlassian-token"]');
+			return meta ? meta.getAttribute('content') : '';
+		}
+
+		function setAutoHeight(el) {
+			var prev = el.style.height;
+			el.style.transition = 'none';
+			el.style.height = 'auto';
+			var target = el.offsetHeight;
+			el.style.height = prev;
+			el.offsetHeight; // reflow
+			el.style.transition = '';
+			el.style.height = target + 'px';
 		}
 
 		// ===== Create test data =====
 		function createTestData() {
 			fetch("$contextPath/plugins/servlet/mail-items/create-test-data", {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: 'atl_token=' + encodeURIComponent(getAtlToken())
 			})
 				.then(function (r) { return r.json(); })
 				.then(function (result) { if (result.success) { preserveScroll = true; loadData(); } })
@@ -296,7 +317,8 @@
 			deleteBtn.textContent = '⏳ Deleting...';
 			fetch("$contextPath/plugins/servlet/mail-items/delete-all", {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: 'atl_token=' + encodeURIComponent(getAtlToken())
 			})
 				.then(function (r) { return r.json(); })
 				.then(function (result) {
@@ -401,7 +423,12 @@
 			htmlView.setAttribute('srcdoc', item.body || '<em style="color:#9ca3af">Пустое сообщение</em>');
 			htmlView.addEventListener('load', function () {
 				var body = htmlView.contentDocument && htmlView.contentDocument.body;
-				if (body) { htmlView.style.height = (body.scrollHeight + 20) + 'px'; }
+				if (body) {
+					htmlView.style.height = (body.scrollHeight + 20) + 'px';
+					if (detailRow.classList.contains('expanded')) {
+						setAutoHeight(wrapper);
+					}
+				}
 			});
 
 			const rawView = document.createElement('pre');
@@ -429,6 +456,9 @@
 					setTimeout(function () {
 						showEl.style.transition = '';
 						showEl.style.opacity = '';
+						if (detailRow.classList.contains('expanded')) {
+							setAutoHeight(wrapper);
+						}
 					}, 180);
 				}, 180);
 			}
@@ -535,6 +565,8 @@
 					const expanding = !detailRow.classList.contains('expanded');
 					detailRow.classList.toggle('expanded');
 					indicator.classList.toggle('expanded', expanding);
+					const wrapperEl = detailRow.querySelector('.detail-wrapper');
+					if (expanding) { setAutoHeight(wrapperEl); } else { wrapperEl.style.height = '0'; }
 				});
 
 				tableBody.appendChild(row);
