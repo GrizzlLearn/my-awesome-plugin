@@ -395,9 +395,14 @@
 			const bodyContainer = document.createElement('div');
 			bodyContainer.className = 'email-body-container';
 
-			const htmlView = document.createElement('div');
+			const htmlView = document.createElement('iframe');
 			htmlView.className = 'email-body-html';
-			htmlView.innerHTML = item.body || '<em style="color:#9ca3af">Пустое сообщение</em>';
+			htmlView.setAttribute('sandbox', 'allow-same-origin');
+			htmlView.setAttribute('srcdoc', item.body || '<em style="color:#9ca3af">Пустое сообщение</em>');
+			htmlView.addEventListener('load', function () {
+				var body = htmlView.contentDocument && htmlView.contentDocument.body;
+				if (body) { htmlView.style.height = (body.scrollHeight + 20) + 'px'; }
+			});
 
 			const rawView = document.createElement('pre');
 			rawView.className = 'email-body-raw';
