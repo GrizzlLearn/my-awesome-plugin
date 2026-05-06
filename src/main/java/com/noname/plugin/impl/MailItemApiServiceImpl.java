@@ -62,6 +62,11 @@ public class MailItemApiServiceImpl implements MailItemApiService {
     }
 
     @Override
+    public boolean deleteEmailById(String id) {
+        return mailItemService.deleteMailItemById(id);
+    }
+
+    @Override
     public void loadTestData() {
         mailItemService.loadTestData();
     }

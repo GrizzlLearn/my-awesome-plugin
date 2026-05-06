@@ -34,6 +34,8 @@ public interface MailItemApiService {
 
     boolean deleteAllEmails();
 
+    boolean deleteEmailById(String id);
+
     void loadTestData();
 
     String getEmailFrom(String id);

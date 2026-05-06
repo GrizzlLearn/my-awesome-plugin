@@ -95,7 +95,7 @@ POST и DELETE требуют прав **системного администр
 ## UI
 
 Таблица писем: `<YOUR-INSTALLATION>/plugins/servlet/mail-items/`
-(также через **Администрирование → Mail Viewer**).
+(также через **Администрирование → Mail Catcher**).
 
 **Список писем** — колонки: отправитель и тема с коротким превью тела.
 
@@ -145,7 +145,8 @@ api.getEmailBodyText(id)  // "Текст" — без HTML-тегов (через
 
 // Управление коллекцией
 api.getEmailCount()       // количество писем в базе
-api.deleteAllEmails()     // true, если что-то удалено
+api.deleteAllEmails()     // true, если все письма удалены
+api.deleteEmailById(id)   // true, если письмо удалено
 api.loadTestData()        // создаёт 5 тестовых писем
 ```
 
