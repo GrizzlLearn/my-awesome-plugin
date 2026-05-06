@@ -1,7 +1,6 @@
 package com.noname.plugin.api;
 
 import com.atlassian.jira.mail.Email;
-import com.noname.plugin.model.MailItem;
 
 /**
  * Публичный OSGi-контракт плагина для работы с письмами.
