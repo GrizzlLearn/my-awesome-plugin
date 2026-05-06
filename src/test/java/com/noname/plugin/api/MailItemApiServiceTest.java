@@ -77,6 +77,30 @@ class MailItemApiServiceTest {
         assertFalse(api.deleteAllEmails());
     }
 
+    // ===== deleteEmailById =====
+
+    @Test
+    @DisplayName("deleteEmailById() — возвращает true, когда сервис удалил письмо")
+    void deleteEmailById_found_returnsTrue() {
+        when(mailItemService.deleteMailItemById("uuid-1")).thenReturn(true);
+        assertTrue(api.deleteEmailById("uuid-1"));
+    }
+
+    @Test
+    @DisplayName("deleteEmailById() — возвращает false, когда письмо не найдено")
+    void deleteEmailById_notFound_returnsFalse() {
+        when(mailItemService.deleteMailItemById("bad-id")).thenReturn(false);
+        assertFalse(api.deleteEmailById("bad-id"));
+    }
+
+    @Test
+    @DisplayName("deleteEmailById() — делегирует вызов в сервис с тем же ID")
+    void deleteEmailById_delegatesToService() {
+        when(mailItemService.deleteMailItemById("uuid-42")).thenReturn(true);
+        api.deleteEmailById("uuid-42");
+        verify(mailItemService).deleteMailItemById("uuid-42");
+    }
+
     // ===== loadTestData =====
 
     @Test

@@ -68,7 +68,7 @@ POST и DELETE требуют прав **системного администр
 Ответ:
 ```json
 {
-  "items": [...],
+  "items": [],
   "total": 42,
   "offset": 0,
   "limit": 10
@@ -268,7 +268,7 @@ mvn verify
 2. В JIRA открыть **Администрирование → Manage Apps → Upload app**
 3. Загрузить `target/mail-catcher-*.jar`
 
-После установки плагин появится в разделе администрирования как **Mail Viewer**.
+После установки плагин появится в разделе администрирования как **Mail Catcher**.
 
 ---
 
@@ -279,11 +279,11 @@ src/test/java/com/noname/plugin/
 ├── MyComponentUnitTest.java
 ├── MyComponentWiredTest.java
 ├── api/
-│   └── MailItemApiServiceTest.java        — unit, публичный API (11 тестов)
+│   └── MailItemApiServiceTest.java        — unit, публичный API (19 тестов)
 ├── service/
-│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (22 теста)
+│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (24 теста)
 ├── servlet/handler/
-│   └── MailItemRequestHandlerTest.java    — unit, HTTP-логика (18 тестов)
+│   └── MailItemRequestHandlerTest.java    — unit, HTTP-логика (17 тестов)
 └── wired/
     ├── MailItemServiceWiredTest.java      — wired, CRUD через реальный AO
     └── MailItemModelWiredTest.java        — wired, модель и маппер
