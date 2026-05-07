@@ -161,7 +161,7 @@ public class MailItemRequestHandler {
                 }
             }
 
-            if (jsonBuffer.length() == 0) {
+            if (jsonBuffer.isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write(err("Request body is required").toString());
                 return;
@@ -217,7 +217,7 @@ public class MailItemRequestHandler {
      * @param e    исключение, вызвавшее ошибку
      * @throws IOException если запись ответа завершилась ошибкой
      */
-    public void handleInternalError(HttpServletResponse resp, Exception e) throws IOException {
+    public void handleInternalError(HttpServletResponse resp, Exception ignored) throws IOException {
         setJsonResponseHeaders(resp);
         resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         resp.getWriter().write(err(INTERNAL_ERROR_MESSAGE).toString());
