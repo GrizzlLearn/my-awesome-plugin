@@ -35,15 +35,6 @@ public class MailItem extends Email {
     }
 
     /**
-     * @param to              адрес основного получателя
-     * @param attachmentsName имена вложений через запятую
-     */
-    public MailItem(String to, String attachmentsName) {
-        super(to);
-        this.attachmentsName = attachmentsName;
-    }
-
-    /**
      * @param to  адрес основного получателя
      * @param cc  адреса получателей в копии
      * @param bcc адреса получателей в скрытой копии

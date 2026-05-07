@@ -68,12 +68,13 @@ class MailViewerServletTest {
     @DisplayName("doGet: unauthenticated user (null) on protected route redirects to login")
     void doGet_unauthenticatedUser_redirectsToLogin() throws IOException {
         when(req.getRequestURI()).thenReturn("/jira/plugins/servlet/mail-items/");
+        when(req.getContextPath()).thenReturn("/jira");
         when(authorizationService.isSystemAdmin()).thenReturn(false);
         when(authorizationService.getLoggedInUser()).thenReturn(null);
 
         servlet.doGet(req, resp);
 
-        verify(resp).sendRedirect(JIRA_LOGIN_URL);
+        verify(resp).sendRedirect("/jira/login.jsp");
         verifyNoInteractions(pageRenderer, requestHandler);
     }
 
@@ -141,12 +142,13 @@ class MailViewerServletTest {
     @Test
     @DisplayName("doPost: unauthenticated user redirects to login")
     void doPost_unauthenticated_redirectsToLogin() throws IOException {
+        when(req.getContextPath()).thenReturn("/jira");
         when(authorizationService.isSystemAdmin()).thenReturn(false);
         when(authorizationService.getLoggedInUser()).thenReturn(null);
 
         servlet.doPost(req, resp);
 
-        verify(resp).sendRedirect(JIRA_LOGIN_URL);
+        verify(resp).sendRedirect("/jira/login.jsp");
         verifyNoInteractions(requestHandler, testDataInitializer);
     }
 
@@ -214,12 +216,13 @@ class MailViewerServletTest {
     @Test
     @DisplayName("doDelete: unauthenticated user redirects to login")
     void doDelete_unauthenticated_redirectsToLogin() throws IOException {
+        when(req.getContextPath()).thenReturn("/jira");
         when(authorizationService.isSystemAdmin()).thenReturn(false);
         when(authorizationService.getLoggedInUser()).thenReturn(null);
 
         servlet.doDelete(req, resp);
 
-        verify(resp).sendRedirect(JIRA_LOGIN_URL);
+        verify(resp).sendRedirect("/jira/login.jsp");
         verifyNoInteractions(requestHandler);
     }
 

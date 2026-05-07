@@ -22,6 +22,9 @@ import static com.noname.plugin.servlet.MailViewerConstants.*;
  * Маршрутизирует GET-запросы к {@link MailItemPageRenderer} (HTML/CSS) и
  * к {@link MailItemRequestHandler} (JSON-данные), POST-запросы — к {@link MailItemRequestHandler}.
  * Не содержит бизнес-логики — только маршрутизация и проверка прав.
+ * <p>Намеренно не аннотирован {@code @Component}: сервлет регистрируется JIRA-контейнером
+ * через {@code atlassian-plugin.xml} как {@code <servlet>}-модуль. Добавление {@code @Component}
+ * вызовет двойную регистрацию (OSGi + Spring) и сломает бин.
  *
  * Доступные маршруты:
  * <ul>
@@ -74,7 +77,7 @@ public class MailViewerServlet extends HttpServlet {
             }
 
             if (!authorizationService.isSystemAdmin()) {
-                handleUnauthorizedRequest(resp);
+                handleUnauthorizedRequest(req, resp);
                 return;
             }
 
@@ -102,7 +105,7 @@ public class MailViewerServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             if (!authorizationService.isSystemAdmin()) {
-                handleUnauthorizedRequest(resp);
+                handleUnauthorizedRequest(req, resp);
                 return;
             }
 
@@ -134,7 +137,7 @@ public class MailViewerServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             if (!authorizationService.isSystemAdmin()) {
-                handleUnauthorizedRequest(resp);
+                handleUnauthorizedRequest(req, resp);
                 return;
             }
 
@@ -156,10 +159,10 @@ public class MailViewerServlet extends HttpServlet {
      * Обрабатывает запросы от неавторизованных пользователей.
      * Неаутентифицированных перенаправляет на страницу входа; аутентифицированным без прав возвращает 403.
      */
-    private void handleUnauthorizedRequest(HttpServletResponse resp) throws IOException {
+    private void handleUnauthorizedRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         ApplicationUser user = authorizationService.getLoggedInUser();
         if (user == null) {
-            resp.sendRedirect(JIRA_LOGIN_URL);
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
         } else {
             requestHandler.handleForbiddenRequest(resp);
         }

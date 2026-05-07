@@ -32,6 +32,7 @@ public class MailItemMapper {
         mailItem.setFrom(entity.getFrom());
         mailItem.setSubject(entity.getSubject());
         mailItem.setBody(entity.getBody());
+        mailItem.setRawHeaders(entity.getRawHeaders());
         return mailItem;
     }
 

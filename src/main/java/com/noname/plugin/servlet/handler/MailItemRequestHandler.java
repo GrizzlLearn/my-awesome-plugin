@@ -145,6 +145,13 @@ public class MailItemRequestHandler {
     public void handleAddEmailRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         setJsonResponseHeaders(resp);
 
+        String contentType = req.getContentType();
+        if (contentType == null || !contentType.contains("application/json")) {
+            resp.setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+            resp.getWriter().write(err(UNSUPPORTED_MEDIA_TYPE_MESSAGE).toString());
+            return;
+        }
+
         try {
             StringBuilder jsonBuffer = new StringBuilder();
             String line;

@@ -150,6 +150,7 @@ class MailItemRequestHandlerTest {
     @DisplayName("handleAddEmailRequest: корректный JSON создаёт письмо и возвращает 201 с ID")
     void handleAddEmailRequest_validJson_returns201WithId() throws Exception {
         String json = "{\"from\":\"a@b.com\",\"to\":\"c@d.com\",\"subject\":\"Тема\",\"body\":\"Текст\"}";
+        when(req.getContentType()).thenReturn("application/json");
         when(req.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
         when(mailItemService.createMailItemFromJson(any())).thenReturn("test-uuid-123");
 
@@ -162,6 +163,7 @@ class MailItemRequestHandlerTest {
     @Test
     @DisplayName("handleAddEmailRequest: пустое тело запроса возвращает 400")
     void handleAddEmailRequest_emptyBody_returns400() throws IOException {
+        when(req.getContentType()).thenReturn("application/json");
         when(req.getReader()).thenReturn(new BufferedReader(new StringReader("")));
 
         handler.handleAddEmailRequest(req, resp);
@@ -173,6 +175,7 @@ class MailItemRequestHandlerTest {
     @Test
     @DisplayName("handleAddEmailRequest: невалидный JSON возвращает 500")
     void handleAddEmailRequest_invalidJson_returns500() throws IOException {
+        when(req.getContentType()).thenReturn("application/json");
         when(req.getReader()).thenReturn(new BufferedReader(new StringReader("{not valid json")));
 
         handler.handleAddEmailRequest(req, resp);
@@ -184,6 +187,7 @@ class MailItemRequestHandlerTest {
     @DisplayName("handleAddEmailRequest: отсутствует получатель — возвращает 400")
     void handleAddEmailRequest_missingRecipient_returns400() throws Exception {
         String json = "{\"from\":\"a@b.com\",\"subject\":\"Тема\"}";
+        when(req.getContentType()).thenReturn("application/json");
         when(req.getReader()).thenReturn(new BufferedReader(new StringReader(json)));
         when(mailItemService.createMailItemFromJson(any()))
                 .thenThrow(new IllegalArgumentException("At least one recipient field (to, cc, bcc) must be provided"));
@@ -192,6 +196,17 @@ class MailItemRequestHandlerTest {
 
         verify(resp).setStatus(HttpServletResponse.SC_BAD_REQUEST);
         assertResponseContains("At least one recipient");
+    }
+
+    @Test
+    @DisplayName("handleAddEmailRequest: Content-Type не application/json возвращает 415 с success=false")
+    void handleAddEmailRequest_wrongContentType_returns415() throws IOException {
+        when(req.getContentType()).thenReturn("text/plain");
+
+        handler.handleAddEmailRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
+        assertResponseContains("\"success\":false");
     }
 
     // ===== handleDeleteByIdRequest =====

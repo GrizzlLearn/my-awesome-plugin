@@ -25,41 +25,11 @@ public class TestDataInitializer {
     }
 
     /**
-     * Инициализирует тестовые данные, если почтовые элементы отсутствуют
-     * @return true, если тестовые данные были созданы, false, если данные уже существовали
-     */
-    public boolean initializeIfEmpty() {
-        if (mailItemService.countMailItems() == 0) {
-            log.info("No mail items found, creating initial test data");
-            return mailItemService.loadTestData();
-        }
-
-        log.debug("Mail items already exist, skipping test data initialization");
-        return false;
-    }
-
-    /**
      * Принудительно создаёт тестовые данные независимо от существующих данных
      * @return true, если тестовые данные были успешно созданы
      */
     public boolean forceCreateTestData() {
         log.info("Force creating test data");
         return mailItemService.loadTestData();
-    }
-
-    /**
-     * Проверяет, пуста ли коллекция почтовых элементов
-     * @return true, если почтовые элементы отсутствуют
-     */
-    public boolean isDataEmpty() {
-        return mailItemService.countMailItems() == 0;
-    }
-
-    /**
-     * Получает текущее количество почтовых элементов
-     * @return количество существующих почтовых элементов
-     */
-    public int getMailItemsCount() {
-        return mailItemService.countMailItems();
     }
 }

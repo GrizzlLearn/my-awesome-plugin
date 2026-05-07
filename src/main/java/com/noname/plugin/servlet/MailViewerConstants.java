@@ -73,9 +73,9 @@ public final class MailViewerConstants {
 
     public static final String EMAIL_NOT_FOUND_MESSAGE = "Mail item not found";
 
-    // --- JIRA URL ---
+    // --- Прочие сообщения ---
 
-    public static final String JIRA_LOGIN_URL = "/jira/login.jsp";
+    public static final String UNSUPPORTED_MEDIA_TYPE_MESSAGE = "Content-Type must be application/json";
 
     private MailViewerConstants() {}
 }
