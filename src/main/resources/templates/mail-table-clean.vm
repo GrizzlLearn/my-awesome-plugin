@@ -120,6 +120,7 @@
 				removeBtn.title = 'Убрать';
 				removeBtn.addEventListener('click', function (e) {
 					e.stopPropagation();
+					tagInput.focus();
 					currentTags.splice(i, 1);
 					renderTags();
 					currentOffset = 0;
@@ -307,10 +308,13 @@
 		}
 
 		// ===== Delete single item =====
+		const deleteItemState = new WeakMap();
+
 		function deleteMailItem(id, btn) {
-			if (btn._confirming) {
-				clearTimeout(btn._confirmTimer);
-				btn._confirming = false;
+			const state = deleteItemState.get(btn);
+			if (state && state.confirming) {
+				clearTimeout(state.timer);
+				deleteItemState.delete(btn);
 				btn.disabled = true;
 				btn.textContent = '⏳ Удаление...';
 				fetch("$contextPath/plugins/servlet/mail-items/" + id, {
@@ -335,14 +339,14 @@
 						btn.classList.remove('delete-item-btn-confirming');
 					});
 			} else {
-				btn._confirming = true;
-				btn.textContent = '⚠ Нажмите ещё раз';
-				btn.classList.add('delete-item-btn-confirming');
-				btn._confirmTimer = setTimeout(function () {
-					btn._confirming = false;
+				const timer = setTimeout(function () {
+					deleteItemState.delete(btn);
 					btn.textContent = 'Удалить';
 					btn.classList.remove('delete-item-btn-confirming');
 				}, 3000);
+				deleteItemState.set(btn, { confirming: true, timer: timer });
+				btn.textContent = '⚠ Нажмите ещё раз';
+				btn.classList.add('delete-item-btn-confirming');
 			}
 		}
 
@@ -418,9 +422,11 @@
 
 			let showingRaw = false;
 			function crossFade(hideEl, showEl) {
+				if (!hideEl.isConnected) return;
 				hideEl.style.transition = 'opacity 0.18s ease';
 				hideEl.style.opacity = '0';
 				setTimeout(function () {
+					if (!hideEl.isConnected) return;
 					hideEl.style.display = 'none';
 					hideEl.style.transition = '';
 					hideEl.style.opacity = '';
@@ -430,6 +436,7 @@
 					showEl.style.transition = 'opacity 0.18s ease';
 					showEl.style.opacity = '1';
 					setTimeout(function () {
+						if (!showEl.isConnected) return;
 						showEl.style.transition = '';
 						showEl.style.opacity = '';
 						if (detailRow.classList.contains('expanded')) {
@@ -509,6 +516,7 @@
 				const indicator = document.createElement('span');
 				indicator.className = 'expand-indicator';
 				indicator.innerHTML = '&#9656;';
+				indicator.setAttribute('aria-hidden', 'true');
 
 				const fromText = document.createElement('span');
 				fromText.textContent = item.from || 'Неизвестный отправитель';
@@ -537,10 +545,13 @@
 				// Detail row
 				const detailRow = createDetailRow(item);
 
+				row.setAttribute('role', 'button');
+				row.setAttribute('aria-expanded', 'false');
 				row.addEventListener('click', function () {
 					const expanding = !detailRow.classList.contains('expanded');
 					detailRow.classList.toggle('expanded');
 					indicator.classList.toggle('expanded', expanding);
+					row.setAttribute('aria-expanded', expanding ? 'true' : 'false');
 					const wrapperEl = detailRow.querySelector('.detail-wrapper');
 					if (expanding) { setAutoHeight(wrapperEl); } else { wrapperEl.style.height = '0'; }
 				});

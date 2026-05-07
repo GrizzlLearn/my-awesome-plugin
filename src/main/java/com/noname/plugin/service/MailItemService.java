@@ -153,7 +153,7 @@ public class MailItemService {
             }
         } else {
             // Фильтрация в памяти с ограничением выборки для защиты от OOM на больших таблицах
-            MailItemEntity[] all = ao.find(MailItemEntity.class, Query.select().limit(5000));
+            MailItemEntity[] all = ao.find(MailItemEntity.class, Query.select().limit(500));
             List<MailItemEntity> filtered = Arrays.stream(all)
                     .filter(e -> matchesAllTags(e, tags))
                     .collect(Collectors.toList());
