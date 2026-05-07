@@ -27,8 +27,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean isSystemAdmin() {
         if (userManager == null) return false;
         UserKey userKey = userManager.getRemoteUserKey();
-        ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-        return user != null && userManager.isSystemAdmin(userKey);
+        return userKey != null && userManager.isSystemAdmin(userKey);
     }
 
     @Override

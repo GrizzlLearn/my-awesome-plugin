@@ -101,8 +101,14 @@
 		let currentOffset = 0;
 		let currentTags = [];
 		let preserveScroll = false;
-		// Курсор обновления: максимальный dbId среди всех загруженных писем
+		// Курсор обновления: максимальный ID среди всех загруженных писем
 		let lastMaxId = 0;
+		// Флаг активного запроса обновления: защита от двойного клика
+		let refreshing = false;
+		// Лимит записей, запрашиваемых при обновлении
+		const REFRESH_LIMIT = 200;
+		// Последнее известное суммарное количество писем (для обновления строки статистики)
+		let lastTotal = 0;
 
 		// ===== Tag input =====
 		function renderTags() {
@@ -546,6 +552,7 @@
 
 			const items = data.items;
 			const total = data.total;
+			lastTotal = total;
 			const offset = data.offset;
 			const limit = data.limit;
 
@@ -603,7 +610,7 @@
 		}
 
 		// ===== Refresh badge =====
-		function showRefreshBadge(count) {
+		function showRefreshBadge(count, truncated) {
 			// Удаляем предыдущий бейдж, если он ещё показывается
 			var existing = document.getElementById('refresh-badge');
 			if (existing) existing.remove();
@@ -611,7 +618,13 @@
 			var badge = document.createElement('span');
 			badge.id = 'refresh-badge';
 			badge.className = 'refresh-badge';
-			badge.textContent = count > 0 ? '+' + count + ' новых' : 'Новых писем нет';
+			if (count === 0) {
+				badge.textContent = 'Новых писем нет';
+			} else if (truncated) {
+				badge.textContent = '+' + count + '+ новых';
+			} else {
+				badge.textContent = '+' + count + ' новых';
+			}
 
 			var btn = document.getElementById('refresh-btn');
 			btn.parentNode.insertBefore(badge, btn.nextSibling);
@@ -621,11 +634,16 @@
 
 		// ===== Refresh new items =====
 		function refreshNewItems() {
-			// Если курсор не установлен — выполняем обычную загрузку
+			if (refreshing) return;
 			if (lastMaxId === 0) { loadData(); return; }
+
+			refreshing = true;
+			const refreshBtn = document.getElementById('refresh-btn');
+			refreshBtn.disabled = true;
 
 			const params = new URLSearchParams();
 			params.set('sinceId', lastMaxId);
+			params.set('limit', REFRESH_LIMIT);
 			currentTags.forEach(function (tag) { params.append('tag', tag); });
 
 			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString())
@@ -635,14 +653,32 @@
 				})
 				.then(function (data) {
 					if (!data.items || data.items.length === 0) {
-						showRefreshBadge(0);
+						showRefreshBadge(0, false);
 						return;
 					}
-					if (data.maxId && data.maxId > lastMaxId) lastMaxId = data.maxId;
+					// Если пользователь не на первой странице — полная перезагрузка
+					if (currentOffset > 0) {
+						if (data.maxId && data.maxId > lastMaxId) lastMaxId = data.maxId;
+						preserveScroll = true;
+						loadData();
+						return;
+					}
+					const newCount = data.items.length;
+					const truncated = newCount >= REFRESH_LIMIT;
+					// Обновляем курсор только после успешного prepend
 					prependNewItems(data.items);
-					showRefreshBadge(data.items.length);
+					if (data.maxId && data.maxId > lastMaxId) lastMaxId = data.maxId;
+					// Обновляем строку статистики
+					lastTotal += newCount;
+					const shownTo = Math.min(PAGE_SIZE + newCount, lastTotal);
+					stats.textContent = 'Показано 1–' + shownTo + ' из ' + lastTotal + ' писем';
+					showRefreshBadge(newCount, truncated);
 				})
-				.catch(function (e) { console.error('Error refreshing:', e); });
+				.catch(function (e) { console.error('Error refreshing:', e); })
+				.finally(function () {
+					refreshing = false;
+					document.getElementById('refresh-btn').disabled = false;
+				});
 		}
 
 		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);

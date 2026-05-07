@@ -314,9 +314,6 @@ class MailItemServiceTest {
         assertEquals(2, result.getJSONArray("items").length());
         // maxId равен максимальному ID среди элементов страницы
         assertEquals(7, result.getInt("maxId"));
-        // dbId присутствует в каждом элементе
-        assertEquals(5, result.getJSONArray("items").getJSONObject(0).getInt("dbId"));
-        assertEquals(7, result.getJSONArray("items").getJSONObject(1).getInt("dbId"));
     }
 
     @Test

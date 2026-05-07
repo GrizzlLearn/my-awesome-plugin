@@ -147,6 +147,7 @@ public class MailItemService {
                 if (tag == null || tag.trim().isEmpty()) continue;
                 String t = "%" + tag.toLowerCase().trim() + "%";
                 if (where.length() > 0) where.append(" AND ");
+                // Двойные кавычки обязательны: FROM и TO — зарезервированные SQL-слова; ANSI-синтаксис поддерживается всеми СУБД JIRA
                 where.append("(LOWER(\"FROM\") LIKE ? OR LOWER(\"TO\") LIKE ? OR LOWER(\"SUBJECT\") LIKE ? OR LOWER(\"BODY\") LIKE ?)");
                 params.add(t);
                 params.add(t);
@@ -165,7 +166,7 @@ public class MailItemService {
         int safeOffset = Math.max(0, offset);
         int safeLimit = limit;
 
-        Query pageQuery = Query.select().offset(safeOffset);
+        Query pageQuery = Query.select().order("ID DESC").offset(safeOffset);
         Query countQuery = Query.select();
 
         if (where.length() > 0) {
@@ -190,7 +191,6 @@ public class MailItemService {
         for (MailItemEntity entity : page) {
             JSONObject obj = new JSONObject();
             obj.put("id", entity.getUuid());
-            obj.put("dbId", entity.getID());
             obj.put("from", entity.getFrom());
             obj.put("to", entity.getTo());
             obj.put("cc", entity.getCc());
