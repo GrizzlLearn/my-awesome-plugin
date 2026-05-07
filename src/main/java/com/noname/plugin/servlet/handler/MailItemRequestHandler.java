@@ -213,8 +213,8 @@ public class MailItemRequestHandler {
     /**
      * Отвечает кодом 500 со стандартным сообщением об ошибке; детали исключения остаются только в логах.
      *
-     * @param resp HTTP-ответ
-     * @param e    исключение, вызвавшее ошибку
+     * @param resp    HTTP-ответ
+     * @param ignored исключение — не используется в ответе; детали логируются вызывающим кодом
      * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleInternalError(HttpServletResponse resp, Exception ignored) throws IOException {
