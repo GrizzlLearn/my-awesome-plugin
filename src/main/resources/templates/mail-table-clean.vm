@@ -191,31 +191,6 @@
 			return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 		}
 
-		function formatHtml(html) {
-			if (!html) return '';
-			const INDENT = '  ';
-			const VOID_TAGS = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i;
-			const tokens = html.match(/(<[^>]+>|[^<]+)/g) || [];
-			let depth = 0;
-			const lines = [];
-			tokens.forEach(function(token) {
-				token = token.trim();
-				if (!token) return;
-				if (token.startsWith('</')) {
-					depth = Math.max(0, depth - 1);
-					lines.push(INDENT.repeat(depth) + token);
-				} else if (token.startsWith('<')) {
-					const tagName = (token.match(/^<(\w+)/) || [])[1] || '';
-					const isSelfClosing = token.endsWith('/>') || VOID_TAGS.test(tagName);
-					lines.push(INDENT.repeat(depth) + token);
-					if (!isSelfClosing) depth++;
-				} else {
-					const text = token.trim();
-					if (text) lines.push(INDENT.repeat(depth) + text);
-				}
-			});
-			return lines.join('\n');
-		}
 
 		// ===== Load data =====
 		function loadData() {
@@ -420,6 +395,7 @@
 			const htmlView = document.createElement('iframe');
 			htmlView.className = 'email-body-html';
 			htmlView.setAttribute('sandbox', 'allow-same-origin');
+			htmlView.setAttribute('csp', "default-src 'none'; style-src 'unsafe-inline'");
 			htmlView.setAttribute('srcdoc', item.body || '<em style="color:#9ca3af">Пустое сообщение</em>');
 			htmlView.addEventListener('load', function () {
 				var body = htmlView.contentDocument && htmlView.contentDocument.body;
@@ -434,7 +410,7 @@
 			const rawView = document.createElement('pre');
 			rawView.className = 'email-body-raw';
 			rawView.style.display = 'none';
-			rawView.textContent = formatHtml(item.body) || 'Пустое сообщение';
+			rawView.textContent = item.body || 'Пустое сообщение';
 
 			const sourceBtn = document.createElement('button');
 			sourceBtn.className = 'source-btn';
