@@ -125,17 +125,19 @@ public class MailItemService {
     }
 
     /**
-     * Возвращает страницу писем в виде JSON-строки с поддержкой поиска и пагинации.
+     * Возвращает страницу писем в виде JSON-строки с поддержкой поиска, пагинации и курсора.
      * Каждый тег должен совпадать хотя бы с одним полем письма (from, to, subject, body) —
      * семантика AND: письмо включается только если соответствует всем переданным тегам.
+     * Если {@code sinceId > 0}, возвращаются только записи с ID > sinceId (режим обновления).
      *
-     * @param tags   массив тегов поиска или {@code null} для возврата всех писем
-     * @param offset нулевой индекс первого элемента страницы
-     * @param limit  максимальное количество элементов на странице (0 — вернуть все)
-     * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}
+     * @param tags    массив тегов поиска или {@code null} для возврата всех писем
+     * @param offset  нулевой индекс первого элемента страницы
+     * @param limit   максимальное количество элементов на странице (0 — вернуть все)
+     * @param sinceId курсор: вернуть только записи с ID строго больше этого значения; 0 — без фильтра
+     * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}, {@code maxId}
      * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
-    public String getAllMailItemsAsJson(String[] tags, int offset, int limit) throws JSONException {
+    public String getAllMailItemsAsJson(String[] tags, int offset, int limit, int sinceId) throws JSONException {
         // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
         StringBuilder where = new StringBuilder();
         List<String> params = new ArrayList<>();
@@ -151,6 +153,13 @@ public class MailItemService {
                 params.add(t);
                 params.add(t);
             }
+        }
+
+        // Курсор: фильтруем записи новее lastMaxId
+        if (sinceId > 0) {
+            if (where.length() > 0) where.append(" AND ");
+            where.append("ID > ?");
+            params.add(String.valueOf(sinceId));
         }
 
         int safeOffset = Math.max(0, offset);
@@ -177,9 +186,11 @@ public class MailItemService {
         }
 
         JSONArray array = new JSONArray();
+        int maxId = sinceId; // если страница пустая — курсор не регрессирует
         for (MailItemEntity entity : page) {
             JSONObject obj = new JSONObject();
             obj.put("id", entity.getUuid());
+            obj.put("dbId", entity.getID());
             obj.put("from", entity.getFrom());
             obj.put("to", entity.getTo());
             obj.put("cc", entity.getCc());
@@ -187,6 +198,8 @@ public class MailItemService {
             obj.put("subject", entity.getSubject());
             obj.put("body", entity.getBody());
             obj.put("attachmentsName", entity.getAttachmentsName());
+            // Обновляем максимальный ID среди элементов текущей страницы
+            if (entity.getID() > maxId) maxId = entity.getID();
             array.put(obj);
         }
 
@@ -196,6 +209,7 @@ public class MailItemService {
         result.put("total", total);
         result.put("offset", offset);
         result.put("limit", effectiveLimitForResponse);
+        result.put("maxId", maxId);
         return result.toString();
     }
 

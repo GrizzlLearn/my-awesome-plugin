@@ -22,6 +22,7 @@
 			🗑️ Delete All Items
 		</button>
 		<a href="$contextPath/plugins/servlet/mail-items/data" target="_blank" class="json-btn">📊 View JSON</a>
+		<button id="refresh-btn" class="refresh-btn">🔄 Обновить</button>
 	</div>
 	<div class="search-bar">
 		<div class="tag-input-container" id="tag-input-container">
@@ -96,10 +97,12 @@
 		const clearSearchBtn = document.getElementById("clear-search-btn");
 
 		// ===== State =====
-		const PAGE_SIZE = 10;
+		let PAGE_SIZE = 10;
 		let currentOffset = 0;
 		let currentTags = [];
 		let preserveScroll = false;
+		// Курсор обновления: максимальный dbId среди всех загруженных писем
+		let lastMaxId = 0;
 
 		// ===== Tag input =====
 		function renderTags() {
@@ -350,9 +353,6 @@
 			}
 		}
 
-		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
-		document.getElementById('delete-all-btn').addEventListener('click', deleteAllMailItems);
-
 		// ===== Detail row =====
 		function createDetailRow(item) {
 			const detailRow = document.createElement("tr");
@@ -476,6 +476,61 @@
 			return detailRow;
 		}
 
+		// ===== Создание пары строк (mail-row + detail-row) для одного письма =====
+		function createMailRowPair(item) {
+			// Основная строка
+			const row = document.createElement("tr");
+			row.className = "mail-row";
+
+			const fromCell = document.createElement("td");
+			fromCell.className = "from-cell";
+
+			const indicator = document.createElement('span');
+			indicator.className = 'expand-indicator';
+			indicator.innerHTML = '&#9656;';
+			indicator.setAttribute('aria-hidden', 'true');
+
+			const fromText = document.createElement('span');
+			fromText.textContent = item.from || 'Неизвестный отправитель';
+
+			fromCell.appendChild(indicator);
+			fromCell.appendChild(fromText);
+
+			const subjectCell = document.createElement("td");
+			subjectCell.className = "subject-col";
+
+			const subjectDiv = document.createElement('div');
+			subjectDiv.className = 'mail-subject';
+			subjectDiv.textContent = item.subject || 'Без темы';
+
+			const previewDiv = document.createElement('div');
+			previewDiv.className = 'mail-preview';
+			const bodyPreview = stripHtml(item.body || '');
+			previewDiv.textContent = bodyPreview.substring(0, 120) || 'Нет содержимого';
+
+			subjectCell.appendChild(subjectDiv);
+			subjectCell.appendChild(previewDiv);
+
+			row.appendChild(fromCell);
+			row.appendChild(subjectCell);
+
+			// Строка с деталями
+			const detailRow = createDetailRow(item);
+
+			row.setAttribute('role', 'button');
+			row.setAttribute('aria-expanded', 'false');
+			row.addEventListener('click', function () {
+				const expanding = !detailRow.classList.contains('expanded');
+				detailRow.classList.toggle('expanded');
+				indicator.classList.toggle('expanded', expanding);
+				row.setAttribute('aria-expanded', expanding ? 'true' : 'false');
+				const wrapperEl = detailRow.querySelector('.detail-wrapper');
+				if (expanding) { setAutoHeight(wrapperEl); } else { wrapperEl.style.height = '0'; }
+			});
+
+			return { row: row, detailRow: detailRow };
+		}
+
 		// ===== Process items =====
 		function processMailItems(data, quiet) {
 			tableBody.innerHTML = '';
@@ -485,6 +540,9 @@
 			} else {
 				loading.style.display = "none";
 			}
+
+			// Обновляем курсор новых писем
+			if (data.maxId && data.maxId > lastMaxId) lastMaxId = data.maxId;
 
 			const items = data.items;
 			const total = data.total;
@@ -506,58 +564,9 @@
 			content.style.display = "block";
 
 			items.forEach(function (item) {
-				// Main row
-				const row = document.createElement("tr");
-				row.className = "mail-row";
-
-				const fromCell = document.createElement("td");
-				fromCell.className = "from-cell";
-
-				const indicator = document.createElement('span');
-				indicator.className = 'expand-indicator';
-				indicator.innerHTML = '&#9656;';
-				indicator.setAttribute('aria-hidden', 'true');
-
-				const fromText = document.createElement('span');
-				fromText.textContent = item.from || 'Неизвестный отправитель';
-
-				fromCell.appendChild(indicator);
-				fromCell.appendChild(fromText);
-
-				const subjectCell = document.createElement("td");
-				subjectCell.className = "subject-col";
-
-				const subjectDiv = document.createElement('div');
-				subjectDiv.className = 'mail-subject';
-				subjectDiv.textContent = item.subject || 'Без темы';
-
-				const previewDiv = document.createElement('div');
-				previewDiv.className = 'mail-preview';
-				const bodyPreview = stripHtml(item.body || '');
-				previewDiv.textContent = bodyPreview.substring(0, 120) || 'Нет содержимого';
-
-				subjectCell.appendChild(subjectDiv);
-				subjectCell.appendChild(previewDiv);
-
-				row.appendChild(fromCell);
-				row.appendChild(subjectCell);
-
-				// Detail row
-				const detailRow = createDetailRow(item);
-
-				row.setAttribute('role', 'button');
-				row.setAttribute('aria-expanded', 'false');
-				row.addEventListener('click', function () {
-					const expanding = !detailRow.classList.contains('expanded');
-					detailRow.classList.toggle('expanded');
-					indicator.classList.toggle('expanded', expanding);
-					row.setAttribute('aria-expanded', expanding ? 'true' : 'false');
-					const wrapperEl = detailRow.querySelector('.detail-wrapper');
-					if (expanding) { setAutoHeight(wrapperEl); } else { wrapperEl.style.height = '0'; }
-				});
-
-				tableBody.appendChild(row);
-				tableBody.appendChild(detailRow);
+				const pair = createMailRowPair(item);
+				tableBody.appendChild(pair.row);
+				tableBody.appendChild(pair.detailRow);
 			});
 
 			// Stats
@@ -576,6 +585,69 @@
 			}
 
 		}
+
+		// ===== Prepend new items =====
+		function prependNewItems(items) {
+			const firstChild = tableBody.firstChild;
+			// Вставляем пары строк в обратном порядке, чтобы сохранить порядок по ID
+			for (let i = items.length - 1; i >= 0; i--) {
+				const pair = createMailRowPair(items[i]);
+				tableBody.insertBefore(pair.detailRow, firstChild);
+				tableBody.insertBefore(pair.row, pair.detailRow);
+			}
+			// Если таблица была скрыта (пустое состояние) — показываем содержимое
+			if (content.style.display === 'none') {
+				emptyState.style.display = 'none';
+				content.style.display = 'block';
+			}
+		}
+
+		// ===== Refresh badge =====
+		function showRefreshBadge(count) {
+			// Удаляем предыдущий бейдж, если он ещё показывается
+			var existing = document.getElementById('refresh-badge');
+			if (existing) existing.remove();
+
+			var badge = document.createElement('span');
+			badge.id = 'refresh-badge';
+			badge.className = 'refresh-badge';
+			badge.textContent = count > 0 ? '+' + count + ' новых' : 'Новых писем нет';
+
+			var btn = document.getElementById('refresh-btn');
+			btn.parentNode.insertBefore(badge, btn.nextSibling);
+
+			setTimeout(function () { badge.remove(); }, 2000);
+		}
+
+		// ===== Refresh new items =====
+		function refreshNewItems() {
+			// Если курсор не установлен — выполняем обычную загрузку
+			if (lastMaxId === 0) { loadData(); return; }
+
+			const params = new URLSearchParams();
+			params.set('sinceId', lastMaxId);
+			currentTags.forEach(function (tag) { params.append('tag', tag); });
+
+			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString())
+				.then(function (r) {
+					if (!r.ok) throw new Error('HTTP error: ' + r.status);
+					return r.json();
+				})
+				.then(function (data) {
+					if (!data.items || data.items.length === 0) {
+						showRefreshBadge(0);
+						return;
+					}
+					if (data.maxId && data.maxId > lastMaxId) lastMaxId = data.maxId;
+					prependNewItems(data.items);
+					showRefreshBadge(data.items.length);
+				})
+				.catch(function (e) { console.error('Error refreshing:', e); });
+		}
+
+		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
+		document.getElementById('delete-all-btn').addEventListener('click', deleteAllMailItems);
+		document.getElementById('refresh-btn').addEventListener('click', refreshNewItems);
 
 		loadData();
 	});

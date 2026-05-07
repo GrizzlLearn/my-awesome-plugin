@@ -45,7 +45,7 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
@@ -61,12 +61,12 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(tags);
         when(req.getParameter("offset")).thenReturn("10");
         when(req.getParameter("limit")).thenReturn("5");
-        when(mailItemService.getAllMailItemsAsJson(tags, 10, 5)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(tags, 10, 5, 0)).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
-        verify(mailItemService).getAllMailItemsAsJson(tags, 10, 5);
+        verify(mailItemService).getAllMailItemsAsJson(tags, 10, 5, 0);
     }
 
     @Test
@@ -76,12 +76,12 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn("-5");
         when(req.getParameter("limit")).thenReturn("abc");
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
-        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
     }
 
     @Test
@@ -90,7 +90,7 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10))
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0))
                 .thenThrow(new com.atlassian.jira.util.json.JSONException("json error"));
 
         handler.handleDataRequest(req, resp);

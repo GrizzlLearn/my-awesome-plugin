@@ -52,8 +52,10 @@ public class MailItemRequestHandler {
             String[] tags = req.getParameterValues("tag");
             int offset = parseIntParam(req.getParameter("offset"), 0);
             int limit = parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE);
+            // Курсор для запроса только новых писем; 0 — без фильтра (обычная загрузка)
+            int sinceId = parseIntParam(req.getParameter("sinceId"), 0);
 
-            String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit);
+            String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit, sinceId);
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(jsonData);
         } catch (JSONException e) {
