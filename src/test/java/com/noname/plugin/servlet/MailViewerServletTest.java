@@ -1,5 +1,6 @@
 package com.noname.plugin.servlet;
 
+import com.noname.plugin.security.AuthorizationService;
 import com.noname.plugin.servlet.handler.MailItemRequestHandler;
 import com.noname.plugin.servlet.renderer.MailItemPageRenderer;
 import com.noname.plugin.servlet.util.TestDataInitializer;

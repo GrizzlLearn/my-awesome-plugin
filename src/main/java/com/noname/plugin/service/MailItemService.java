@@ -13,6 +13,7 @@ import net.java.ao.Query;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -135,32 +136,44 @@ public class MailItemService {
      * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
     public String getAllMailItemsAsJson(String[] tags, int offset, int limit) throws JSONException {
-        boolean hasSearch = tags != null
-                && Arrays.stream(tags).anyMatch(t -> t != null && !t.trim().isEmpty());
+        // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
+        StringBuilder where = new StringBuilder();
+        List<String> params = new ArrayList<>();
+
+        if (tags != null) {
+            for (String tag : tags) {
+                if (tag == null || tag.trim().isEmpty()) continue;
+                String t = "%" + tag.toLowerCase().trim() + "%";
+                if (where.length() > 0) where.append(" AND ");
+                where.append("(LOWER(\"FROM\") LIKE ? OR LOWER(\"TO\") LIKE ? OR LOWER(\"SUBJECT\") LIKE ? OR LOWER(\"BODY\") LIKE ?)");
+                params.add(t);
+                params.add(t);
+                params.add(t);
+                params.add(t);
+            }
+        }
+
+        int safeOffset = Math.max(0, offset);
+        int safeLimit = limit;
+
+        Query pageQuery = Query.select().offset(safeOffset);
+        Query countQuery = Query.select();
+
+        if (where.length() > 0) {
+            Object[] args = params.toArray();
+            pageQuery = pageQuery.where(where.toString(), args);
+            countQuery = countQuery.where(where.toString(), args);
+        }
+
+        int total = ao.count(MailItemEntity.class, countQuery);
 
         List<MailItemEntity> page;
-        int total;
-
-        if (!hasSearch) {
-            total = ao.count(MailItemEntity.class);
-            if (total == 0) {
-                page = List.of();
-            } else {
-                int safeOffset = Math.max(0, offset);
-                int safeLimit = (limit <= 0) ? total : limit;
-                page = Arrays.asList(ao.find(MailItemEntity.class,
-                        Query.select().limit(safeLimit).offset(safeOffset)));
-            }
+        if (total == 0) {
+            page = List.of();
         } else {
-            // Фильтрация в памяти с ограничением выборки для защиты от OOM на больших таблицах
-            MailItemEntity[] all = ao.find(MailItemEntity.class, Query.select().limit(500));
-            List<MailItemEntity> filtered = Arrays.stream(all)
-                    .filter(e -> matchesAllTags(e, tags))
-                    .collect(Collectors.toList());
-            total = filtered.size();
-            int safeOffset = Math.max(0, offset);
-            int safeLimit = (limit <= 0) ? total : limit;
-            page = total == 0 ? List.of() : filtered.subList(safeOffset, Math.min(safeOffset + safeLimit, total));
+            int effectiveLimit = (safeLimit <= 0) ? total : safeLimit;
+            pageQuery = pageQuery.limit(effectiveLimit);
+            page = Arrays.asList(ao.find(MailItemEntity.class, pageQuery));
         }
 
         JSONArray array = new JSONArray();
@@ -177,11 +190,12 @@ public class MailItemService {
             array.put(obj);
         }
 
+        int effectiveLimitForResponse = (safeLimit <= 0) ? total : safeLimit;
         JSONObject result = new JSONObject();
         result.put("items", array);
         result.put("total", total);
         result.put("offset", offset);
-        result.put("limit", (limit <= 0) ? total : limit);
+        result.put("limit", effectiveLimitForResponse);
         return result.toString();
     }
 
@@ -192,13 +206,18 @@ public class MailItemService {
      * @throws RuntimeException если удаление завершилось ошибкой
      */
     public boolean deleteAllMailItemsSafe() {
+        // Батчевое удаление: по 200 записей за итерацию, offset не нужен — после удаления записи сдвигаются
         try {
-            MailItemEntity[] entities = ao.find(MailItemEntity.class);
-            if (entities.length > 0) {
-                ao.delete(entities);
-                return true;
+            boolean deletedAny = false;
+            while (true) {
+                MailItemEntity[] batch = ao.find(MailItemEntity.class, Query.select().limit(200));
+                if (batch.length == 0) break;
+                for (MailItemEntity entity : batch) {
+                    ao.delete(entity);
+                }
+                deletedAny = true;
             }
-            return false;
+            return deletedAny;
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete all mail items", e);
         }
@@ -256,24 +275,4 @@ public class MailItemService {
         }
     }
 
-    private static boolean matchesAllTags(MailItemEntity entity, String[] tags) {
-        if (tags == null || tags.length == 0) return true;
-        for (String tag : tags) {
-            String lower = tag.toLowerCase().trim();
-            if (lower.isEmpty()) continue;
-            if (!matchesTag(entity, lower)) return false;
-        }
-        return true;
-    }
-
-    private static boolean matchesTag(MailItemEntity entity, String lowerTag) {
-        return containsIgnoreCase(entity.getFrom(), lowerTag)
-                || containsIgnoreCase(entity.getTo(), lowerTag)
-                || containsIgnoreCase(entity.getSubject(), lowerTag)
-                || containsIgnoreCase(entity.getBody(), lowerTag);
-    }
-
-    private static boolean containsIgnoreCase(String field, String search) {
-        return field != null && field.toLowerCase().contains(search);
-    }
 }

@@ -1,10 +1,10 @@
-package com.noname.plugin.servlet;
+package com.noname.plugin.security;
 
 import com.atlassian.jira.user.ApplicationUser;
 
 /**
  * Определяет, авторизован ли текущий пользователь запроса для работы с просмотрщиком почты.
- * Вынесен из {@link MailViewerServlet}, чтобы сделать логику авторизации инжектируемой и тестируемой.
+ * Вынесен из {@link com.noname.plugin.servlet.MailViewerServlet}, чтобы сделать логику авторизации инжектируемой и тестируемой.
  */
 public interface AuthorizationService {
 
