@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>mail-catcher</artifactId>
-    <version>0.9.7.4</version>
+    <version>0.9.7.5</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
@@ -125,15 +125,6 @@
 
     <build>
         <plugins>
-            <!--<plugin>
-                <groupId>com.noname.plugin</groupId>
-                <artifactId>mail-catcher</artifactId>
-                <version>0.1</version>
-                <configuration>
-                    &lt;!&ndash; LOGS &ndash;&gt;
-                    <log4jProperties>src/main/resources/log4j.properties</log4jProperties>
-                </configuration>
-            </plugin>-->
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
                 <artifactId>jira-maven-plugin</artifactId>

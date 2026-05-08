@@ -99,6 +99,7 @@ public class MailItemService {
      * @return {@link MailItem} или {@code null}, если письмо не найдено
      */
     public MailItem getMailItemById(String uuid) {
+        if (uuid == null || !uuid.matches("[0-9a-fA-F-]{36}")) return null;
         MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
         if (results.length == 0) return null;
         return MailItemMapper.toDtoFull(results[0]);
@@ -108,7 +109,9 @@ public class MailItemService {
      * Возвращает все письма из базы данных в виде доменных объектов.
      *
      * @return список всех писем; пустой список, если записей нет
+     * @deprecated Загружает все записи без ограничения. Используйте {@link #getAllMailItemsAsJson} с пагинацией.
      */
+    @Deprecated
     public List<MailItem> getAllMailItems() {
         return Arrays.stream(ao.find(MailItemEntity.class))
                 .map(MailItemMapper::toDtoFull)
@@ -244,6 +247,7 @@ public class MailItemService {
      * @return {@code true} если письмо найдено и удалено; {@code false} если не найдено
      */
     public boolean deleteMailItemById(String uuid) {
+        if (uuid == null || !uuid.matches("[0-9a-fA-F-]{36}")) return false;
         MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
         if (results.length == 0) return false;
         ao.delete(results[0]);

@@ -92,7 +92,7 @@ public class MailViewerServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            log.error("Error handling GET request: " + req.getRequestURI(), e);
+            log.error("Error handling GET request: {}", req.getRequestURI(), e);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal server error");
         }
     }
@@ -123,7 +123,7 @@ public class MailViewerServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            log.error("Error handling POST request: " + req.getRequestURI(), e);
+            log.error("Error handling POST request: {}", req.getRequestURI(), e);
             requestHandler.handleInternalError(resp, e);
         }
     }
@@ -150,7 +150,7 @@ public class MailViewerServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            log.error("Error handling DELETE request: " + req.getRequestURI(), e);
+            log.error("Error handling DELETE request: {}", req.getRequestURI(), e);
             requestHandler.handleInternalError(resp, e);
         }
     }

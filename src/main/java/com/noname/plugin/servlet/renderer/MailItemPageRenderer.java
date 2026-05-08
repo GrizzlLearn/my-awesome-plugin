@@ -64,7 +64,7 @@ public class MailItemPageRenderer {
                 String vmContent = readStreamToString(vmStream);
                 resp.getWriter().write(processVelocityTemplate(vmContent, req));
             } else {
-                log.error("Table template not found: " + TABLE_TEMPLATE_PATH);
+                log.error("Table template not found: {}", TABLE_TEMPLATE_PATH);
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, TEMPLATE_NOT_FOUND_MESSAGE);
             }
 
@@ -98,11 +98,11 @@ public class MailItemPageRenderer {
             try {
                 resp.getWriter().write(readStreamToString(cssStream));
             } catch (IOException e) {
-                log.error("Error reading CSS file: " + cssPath, e);
+                log.error("Error reading CSS file: {}", cssPath, e);
                 resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error reading CSS file");
             }
         } else {
-            log.warn("CSS file not found: " + cssPath);
+            log.warn("CSS file not found: {}", cssPath);
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, CSS_NOT_FOUND_MESSAGE);
         }
     }
