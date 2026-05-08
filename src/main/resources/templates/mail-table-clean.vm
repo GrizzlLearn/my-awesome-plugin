@@ -610,7 +610,7 @@
 		}
 
 		// ===== Refresh badge =====
-		function showRefreshBadge(count, truncated) {
+		function showRefreshBadge(count, truncated, errorMsg) {
 			// Удаляем предыдущий бейдж, если он ещё показывается
 			var existing = document.getElementById('refresh-badge');
 			if (existing) existing.remove();
@@ -618,18 +618,28 @@
 			var badge = document.createElement('span');
 			badge.id = 'refresh-badge';
 			badge.className = 'refresh-badge';
-			if (count === 0) {
+
+			var timeout;
+			if (errorMsg) {
+				badge.className += ' refresh-badge-error';
+				var short = errorMsg.length > 60 ? errorMsg.slice(0, 57) + '...' : errorMsg;
+				badge.textContent = 'Ошибка: ' + short;
+				timeout = 6000;
+			} else if (count === 0) {
 				badge.textContent = 'Новых писем нет';
+				timeout = 2000;
 			} else if (truncated) {
 				badge.textContent = '+' + count + '+ новых';
+				timeout = 2000;
 			} else {
 				badge.textContent = '+' + count + ' новых';
+				timeout = 2000;
 			}
 
 			var btn = document.getElementById('refresh-btn');
 			btn.parentNode.insertBefore(badge, btn.nextSibling);
 
-			setTimeout(function () { badge.remove(); }, 2000);
+			setTimeout(function () { badge.remove(); }, timeout);
 		}
 
 		// ===== Refresh new items =====
@@ -674,7 +684,7 @@
 					stats.textContent = 'Показано 1–' + shownTo + ' из ' + lastTotal + ' писем';
 					showRefreshBadge(newCount, truncated);
 				})
-				.catch(function (e) { console.error('Error refreshing:', e); })
+				.catch(function (e) { console.error('Error refreshing:', e); showRefreshBadge(0, false, e.message); })
 				.finally(function () {
 					refreshing = false;
 					document.getElementById('refresh-btn').disabled = false;

@@ -121,6 +121,12 @@
     font-weight: 500;
 }
 
+.refresh-badge-error {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
 .json-btn {
     display: inline-flex;
     align-items: center;
