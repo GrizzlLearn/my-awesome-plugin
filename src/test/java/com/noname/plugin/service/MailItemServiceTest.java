@@ -329,6 +329,22 @@ class MailItemServiceTest {
         assertEquals(42, result.getInt("maxId"));
     }
 
+    // ===== getMailItemById =====
+
+    @Test
+    @DisplayName("getMailItemById: невалидный UUID — возвращает null без обращения к БД")
+    void getMailItemById_invalidUuid_returnsNullWithoutDbQuery() {
+        assertNull(service.getMailItemById("not-a-uuid"));
+        verify(ao, never()).find(any(), any(Query.class));
+    }
+
+    @Test
+    @DisplayName("getMailItemById: null UUID — возвращает null без обращения к БД")
+    void getMailItemById_nullUuid_returnsNullWithoutDbQuery() {
+        assertNull(service.getMailItemById(null));
+        verify(ao, never()).find(any(), any(Query.class));
+    }
+
     // ===== deleteMailItemById =====
 
     @Test
@@ -337,7 +353,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        assertTrue(service.deleteMailItemById("uuid-1"));
+        assertTrue(service.deleteMailItemById("550e8400-e29b-41d4-a716-446655440001"));
         verify(ao).delete(entity1);
     }
 
@@ -347,8 +363,22 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[0]);
 
-        assertFalse(service.deleteMailItemById("no-such-uuid"));
+        assertFalse(service.deleteMailItemById("550e8400-e29b-41d4-a716-446655440099"));
         verify(ao, never()).delete(any(MailItemEntity.class));
+    }
+
+    @Test
+    @DisplayName("deleteMailItemById: невалидный UUID — возвращает false без обращения к БД")
+    void deleteMailItemById_invalidUuid_returnsFalseWithoutDbQuery() {
+        assertFalse(service.deleteMailItemById("not-a-uuid"));
+        verify(ao, never()).find(any(), any(Query.class));
+    }
+
+    @Test
+    @DisplayName("deleteMailItemById: null UUID — возвращает false без обращения к БД")
+    void deleteMailItemById_nullUuid_returnsFalseWithoutDbQuery() {
+        assertFalse(service.deleteMailItemById(null));
+        verify(ao, never()).find(any(), any(Query.class));
     }
 
     // ===== deleteAllMailItemsSafe =====

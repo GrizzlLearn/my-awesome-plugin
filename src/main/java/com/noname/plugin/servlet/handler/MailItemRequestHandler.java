@@ -152,11 +152,25 @@ public class MailItemRequestHandler {
             return;
         }
 
+        int contentLength = req.getContentLength();
+        if (contentLength > MAX_REQUEST_BODY_BYTES) {
+            resp.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+            resp.getWriter().write(err(REQUEST_TOO_LARGE_MESSAGE).toString());
+            return;
+        }
+
         try {
             StringBuilder jsonBuffer = new StringBuilder();
             String line;
+            int totalChars = 0;
             try (BufferedReader reader = req.getReader()) {
                 while ((line = reader.readLine()) != null) {
+                    totalChars += line.length();
+                    if (totalChars > MAX_REQUEST_BODY_BYTES) {
+                        resp.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+                        resp.getWriter().write(err(REQUEST_TOO_LARGE_MESSAGE).toString());
+                        return;
+                    }
                     jsonBuffer.append(line);
                 }
             }

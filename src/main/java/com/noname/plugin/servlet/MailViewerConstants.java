@@ -73,9 +73,15 @@ public final class MailViewerConstants {
 
     public static final String EMAIL_NOT_FOUND_MESSAGE = "Mail item not found";
 
+    // --- Ограничения ---
+
+    /** Максимально допустимый размер тела запроса: 1 МБ. */
+    public static final int MAX_REQUEST_BODY_BYTES = 1024 * 1024;
+
     // --- Прочие сообщения ---
 
     public static final String UNSUPPORTED_MEDIA_TYPE_MESSAGE = "Content-Type must be application/json";
+    public static final String REQUEST_TOO_LARGE_MESSAGE      = "Request body too large (max 1 MB)";
 
     private MailViewerConstants() {}
 }

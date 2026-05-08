@@ -209,6 +209,32 @@ class MailItemRequestHandlerTest {
         assertResponseContains("\"success\":false");
     }
 
+    @Test
+    @DisplayName("handleAddEmailRequest: Content-Length превышает 1 МБ — возвращает 413")
+    void handleAddEmailRequest_contentLengthTooLarge_returns413() throws IOException {
+        when(req.getContentType()).thenReturn("application/json");
+        when(req.getContentLength()).thenReturn(1024 * 1024 + 1);
+
+        handler.handleAddEmailRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+        assertResponseContains("too large");
+    }
+
+    @Test
+    @DisplayName("handleAddEmailRequest: chunked тело превышает 1 МБ — возвращает 413")
+    void handleAddEmailRequest_chunkedBodyTooLarge_returns413() throws IOException {
+        when(req.getContentType()).thenReturn("application/json");
+        when(req.getContentLength()).thenReturn(-1);
+        String bigBody = "x".repeat(1024 * 1024 + 1);
+        when(req.getReader()).thenReturn(new BufferedReader(new StringReader(bigBody)));
+
+        handler.handleAddEmailRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+        assertResponseContains("too large");
+    }
+
     // ===== handleDeleteByIdRequest =====
 
     @Test
