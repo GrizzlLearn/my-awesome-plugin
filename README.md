@@ -37,6 +37,10 @@ mapper/
   MailItemMapper             — конвертация Entity → MailItem
 api/
   MailItemApiService         — публичный OSGi API для ScriptRunner / тестов
+impl/
+  MailItemApiServiceImpl     — реализация OSGi-сервиса (@ExportAsService)
+security/
+  AuthorizationService       — проверка прав системного администратора
 ```
 
 ---
@@ -64,6 +68,7 @@ POST и DELETE требуют прав **системного администр
 | `tag` | string (повторяемый) | — | Фильтр по тегу; AND-логика — письмо должно содержать все теги |
 | `offset` | int | `0` | Индекс первого элемента страницы |
 | `limit` | int | `10` | Количество элементов на странице |
+| `sinceId` | int | `0` | Вернуть только письма с ID больше указанного (используется для обновления списка) |
 
 Ответ:
 ```json
@@ -71,7 +76,8 @@ POST и DELETE требуют прав **системного администр
   "items": [],
   "total": 42,
   "offset": 0,
-  "limit": 10
+  "limit": 10,
+  "maxId": 123
 }
 ```
 
@@ -276,14 +282,16 @@ mvn verify
 
 ```
 src/test/java/com/noname/plugin/
-├── MyComponentUnitTest.java
-├── MyComponentWiredTest.java
 ├── api/
 │   └── MailItemApiServiceTest.java        — unit, публичный API (19 тестов)
+├── security/
+│   └── AuthorizationServiceImplTest.java  — unit, проверка прав (3 теста)
 ├── service/
-│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (24 теста)
-├── servlet/handler/
-│   └── MailItemRequestHandlerTest.java    — unit, HTTP-логика (17 тестов)
+│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (26 тестов)
+├── servlet/
+│   ├── MailViewerServletTest.java         — unit, HTTP-маршрутизация (19 тестов)
+│   └── handler/
+│       └── MailItemRequestHandlerTest.java — unit, HTTP-логика (18 тестов)
 └── wired/
     ├── MailItemServiceWiredTest.java      — wired, CRUD через реальный AO
     └── MailItemModelWiredTest.java        — wired, модель и маппер

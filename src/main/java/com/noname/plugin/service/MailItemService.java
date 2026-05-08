@@ -156,7 +156,7 @@ public class MailItemService {
             }
         }
 
-        // Курсор: фильтруем записи новее lastMaxId
+        // Курсор: фильтруем записи новее sinceId
         if (sinceId > 0) {
             if (where.length() > 0) where.append(" AND ");
             where.append("ID > ?");
