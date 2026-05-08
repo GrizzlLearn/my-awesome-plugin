@@ -85,6 +85,51 @@ class MailItemRequestHandlerTest {
     }
 
     @Test
+    @DisplayName("handleDataRequest: sinceId=42 передаётся в сервис")
+    void handleDataRequest_withSinceId_passesToService() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10,\"maxId\":42}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn("42");
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 42)).thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 42);
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: нечисловой sinceId заменяется на 0")
+    void handleDataRequest_nonNumericSinceId_usesDefault() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10,\"maxId\":0}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn("abc");
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: отрицательный sinceId заменяется на 0")
+    void handleDataRequest_negativeSinceId_usesDefault() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10,\"maxId\":0}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn("-5");
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
+    }
+
+    @Test
     @DisplayName("handleDataRequest: JSONException от сервиса возвращает 500")
     void handleDataRequest_serviceThrowsJSONException_returns500() throws Exception {
         when(req.getParameterValues("tag")).thenReturn(null);

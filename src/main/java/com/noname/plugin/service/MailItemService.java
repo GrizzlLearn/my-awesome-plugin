@@ -229,9 +229,7 @@ public class MailItemService {
             while (true) {
                 MailItemEntity[] batch = ao.find(MailItemEntity.class, Query.select().limit(200));
                 if (batch.length == 0) break;
-                for (MailItemEntity entity : batch) {
-                    ao.delete(entity);
-                }
+                ao.delete(batch);
                 deletedAny = true;
             }
             return deletedAny;

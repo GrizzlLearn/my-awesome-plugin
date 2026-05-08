@@ -329,6 +329,23 @@ class MailItemServiceTest {
         assertEquals(42, result.getInt("maxId"));
     }
 
+    @Test
+    @DisplayName("getAllMailItemsAsJson: sinceId + теги — оба условия применяются одновременно")
+    void getAllMailItemsAsJson_withSinceIdAndTags_combinesCorrectly() throws JSONException {
+        stubEntity(entity1, "uuid-1", "alice@test.com", "x@t.com", "Тема", null);
+        lenient().when(entity1.getID()).thenReturn(10);
+        when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(1);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1});
+
+        String json = service.getAllMailItemsAsJson(new String[]{"alice"}, 0, 10, 5);
+
+        JSONObject result = new JSONObject(json);
+        assertEquals(1, result.getJSONArray("items").length());
+        assertEquals(10, result.getInt("maxId"));
+        assertEquals(1, result.getInt("total"));
+    }
+
     // ===== getMailItemById =====
 
     @Test
@@ -392,8 +409,7 @@ class MailItemServiceTest {
                 .thenReturn(new MailItemEntity[0]);
 
         assertTrue(service.deleteAllMailItemsSafe());
-        verify(ao).delete(entity1);
-        verify(ao).delete(entity2);
+        verify(ao).delete(entity1, entity2);
     }
 
     @Test
