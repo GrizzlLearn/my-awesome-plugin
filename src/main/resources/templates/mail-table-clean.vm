@@ -107,6 +107,7 @@
 		let refreshing = false;
 		// Лимит записей, запрашиваемых при обновлении
 		const REFRESH_LIMIT = 200;
+		let refreshBadgeTimer = null;
 		// Последнее известное суммарное количество писем (для обновления строки статистики)
 		let lastTotal = 0;
 
@@ -611,7 +612,7 @@
 
 		// ===== Refresh badge =====
 		function showRefreshBadge(count, truncated, errorMsg) {
-			// Удаляем предыдущий бейдж, если он ещё показывается
+			clearTimeout(refreshBadgeTimer);
 			var existing = document.getElementById('refresh-badge');
 			if (existing) existing.remove();
 
@@ -639,7 +640,7 @@
 			var btn = document.getElementById('refresh-btn');
 			btn.parentNode.insertBefore(badge, btn.nextSibling);
 
-			setTimeout(function () { badge.remove(); }, timeout);
+			refreshBadgeTimer = setTimeout(function () { badge.remove(); }, timeout);
 		}
 
 		// ===== Refresh new items =====
@@ -659,6 +660,8 @@
 			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString())
 				.then(function (r) {
 					if (!r.ok) throw new Error('HTTP error: ' + r.status);
+					const ct = r.headers.get("content-type");
+					if (!ct || !ct.includes("application/json")) throw new Error("Response is not JSON");
 					return r.json();
 				})
 				.then(function (data) {
