@@ -180,12 +180,12 @@ class MailItemRequestHandlerTest {
     }
 
     @Test
-    @DisplayName("handleCreateTestDataRequest: при неудаче возвращает 200 с сообщением об ошибке создания")
+    @DisplayName("handleCreateTestDataRequest: при неудаче возвращает 500")
     void handleCreateTestDataRequest_failed_returnsErrorMessage() throws IOException {
         handler.handleCreateTestDataRequest(resp, false);
 
-        verify(resp).setStatus(HttpServletResponse.SC_OK);
-        assertResponseContains("\"success\":true");
+        verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        assertResponseContains("\"success\":false");
         assertResponseContains("Failed to create test data");
     }
 

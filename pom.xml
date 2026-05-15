@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>mail-catcher</artifactId>
-    <version>0.9.8.6</version>
+    <version>0.9.8.7</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
@@ -171,6 +171,7 @@
 
                         <!-- Ensure plugin is spring powered -->
                         <Embed-Dependency>jsoup</Embed-Dependency>
+                        <Embed-Transitive>false</Embed-Transitive>
                         <Spring-Context>*</Spring-Context>
                     </instructions>
 

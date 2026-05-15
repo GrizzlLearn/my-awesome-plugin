@@ -123,9 +123,14 @@ public class MailItemRequestHandler {
         setJsonResponseHeaders(resp);
 
         try {
-            JSONObject payload = new JSONObject().put("result", created);
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().write(ok(created ? TEST_DATA_SUCCESS_MESSAGE : TEST_DATA_ERROR_MESSAGE, payload).toString());
+            if (created) {
+                JSONObject payload = new JSONObject().put("result", true);
+                resp.setStatus(HttpServletResponse.SC_OK);
+                resp.getWriter().write(ok(TEST_DATA_SUCCESS_MESSAGE, payload).toString());
+            } else {
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().write(err(TEST_DATA_ERROR_MESSAGE).toString());
+            }
         } catch (Exception e) {
             log.error("Error creating test data", e);
             handleInternalError(resp, e);

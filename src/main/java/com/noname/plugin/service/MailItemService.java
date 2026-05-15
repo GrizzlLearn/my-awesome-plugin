@@ -1,6 +1,7 @@
 package com.noname.plugin.service;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.activeobjects.tx.Transactional;
 import com.atlassian.jira.mail.Email;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONException;
@@ -42,6 +43,7 @@ public class MailItemService {
      * @return UUID созданной записи
      * @throws IllegalArgumentException если {@code email} равен {@code null}
      */
+    @Transactional
     public String createMailItem(Email email) {
         if (email == null) throw new IllegalArgumentException("Email cannot be null");
         String uuid = UUID.randomUUID().toString();
@@ -72,6 +74,7 @@ public class MailItemService {
      * @throws JSONException            если JSON некорректен
      * @throws IllegalArgumentException если поле {@code to} пустое или отсутствует
      */
+    @Transactional
     public String createMailItemFromJson(JSONObject json) throws JSONException {
         String to = json.optString("to", null);
         String cc = json.optString("cc", null);
@@ -140,6 +143,7 @@ public class MailItemService {
      * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}, {@code maxId}
      * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
+    @Transactional
     public String getAllMailItemsAsJson(String[] tags, int offset, int limit, int sinceId) throws JSONException {
         // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
         StringBuilder where = new StringBuilder();
@@ -222,6 +226,7 @@ public class MailItemService {
      * @return {@code true} если удалена хотя бы одна запись; {@code false} если таблица была пустой
      * @throws RuntimeException если удаление завершилось ошибкой
      */
+    @Transactional
     public boolean deleteAllMailItemsSafe() {
         // Батчевое удаление: по 200 записей за итерацию, offset не нужен — после удаления записи сдвигаются
         try {
@@ -244,6 +249,7 @@ public class MailItemService {
      * @param uuid идентификатор письма
      * @return {@code true} если письмо найдено и удалено; {@code false} если не найдено
      */
+    @Transactional
     public boolean deleteMailItemById(String uuid) {
         if (uuid == null || !uuid.matches("[0-9a-fA-F-]{36}")) return false;
         MailItemEntity[] results = ao.find(MailItemEntity.class, Query.select().where("UUID = ?", uuid));
@@ -259,6 +265,7 @@ public class MailItemService {
      * @return {@code true} при успешном выполнении
      * @throws RuntimeException если создание записей завершилось ошибкой
      */
+    @Transactional
     public boolean loadTestData() {
         try {
             int startIndex = countMailItems() + 1;
