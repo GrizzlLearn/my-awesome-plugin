@@ -55,8 +55,7 @@ public class MailItemService {
         entity.setBcc(email.getBcc());
         entity.setSubject(email.getSubject());
         entity.setBody(email.getBody());
-        if (email instanceof MailItem) {
-            MailItem mailItem = (MailItem) email;
+        if (email instanceof MailItem mailItem) {
             entity.setAttachmentsName(mailItem.getAttachmentsName());
             entity.setRawHeaders(mailItem.getRawHeaders());
         }
@@ -153,7 +152,7 @@ public class MailItemService {
             for (String tag : tags) {
                 if (tag == null || tag.trim().isEmpty()) continue;
                 String t = "%" + tag.toLowerCase().trim() + "%";
-                if (where.length() > 0) where.append(" AND ");
+                if (!where.isEmpty()) where.append(" AND ");
                 // Двойные кавычки обязательны: FROM и TO — зарезервированные SQL-слова; ANSI-синтаксис поддерживается всеми СУБД JIRA
                 where.append("(LOWER(\"FROM\") LIKE ? OR LOWER(\"TO\") LIKE ? OR LOWER(\"SUBJECT\") LIKE ? OR LOWER(\"BODY\") LIKE ?)");
                 params.add(t);
@@ -165,18 +164,17 @@ public class MailItemService {
 
         // Курсор: фильтруем записи новее sinceId
         if (sinceId > 0) {
-            if (where.length() > 0) where.append(" AND ");
+            if (!where.isEmpty()) where.append(" AND ");
             where.append("ID > ?");
             params.add(String.valueOf(sinceId));
         }
 
         int safeOffset = Math.max(0, offset);
-        int safeLimit = limit;
 
         Query pageQuery = Query.select().order("ID DESC").offset(safeOffset);
         Query countQuery = Query.select();
 
-        if (where.length() > 0) {
+        if (!where.isEmpty()) {
             Object[] args = params.toArray();
             pageQuery = pageQuery.where(where.toString(), args);
             countQuery = countQuery.where(where.toString(), args);
@@ -188,7 +186,7 @@ public class MailItemService {
         if (total == 0) {
             page = List.of();
         } else {
-            int effectiveLimit = (safeLimit <= 0) ? total : safeLimit;
+            int effectiveLimit = (limit <= 0) ? total : limit;
             pageQuery = pageQuery.limit(effectiveLimit);
             page = Arrays.asList(ao.find(MailItemEntity.class, pageQuery));
         }
@@ -210,7 +208,7 @@ public class MailItemService {
             array.put(obj);
         }
 
-        int effectiveLimitForResponse = (safeLimit <= 0) ? total : safeLimit;
+        int effectiveLimitForResponse = (limit <= 0) ? total : limit;
         JSONObject result = new JSONObject();
         result.put("items", array);
         result.put("total", total);

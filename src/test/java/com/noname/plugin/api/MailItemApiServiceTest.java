@@ -52,6 +52,7 @@ class MailItemApiServiceTest {
     // ===== getEmailCount =====
 
     @Test
+    @SuppressWarnings("deprecation")
     @DisplayName("getEmailCount() — использует countMailItems(), а не getAllMailItems().size()")
     void getEmailCount_usesCountMailItems() {
         when(mailItemService.countMailItems()).thenReturn(7);
