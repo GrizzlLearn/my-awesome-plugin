@@ -169,6 +169,7 @@ class MailViewerServletTest {
     @DisplayName("doPost: /delete-all delegates to handleDeleteAllRequest")
     void doPost_deleteAll_delegatesToHandler() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn(DELETE_ALL_ENDPOINT);
 
         servlet.doPost(req, resp);
@@ -180,6 +181,7 @@ class MailViewerServletTest {
     @DisplayName("doPost: /create-test-data calls initializer then handler")
     void doPost_createTestData_callsInitializerAndHandler() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn(CREATE_TEST_DATA_ENDPOINT);
         when(testDataInitializer.forceCreateTestData()).thenReturn(true);
 
@@ -193,6 +195,7 @@ class MailViewerServletTest {
     @DisplayName("doPost: /add-email delegates to handleAddEmailRequest")
     void doPost_addEmail_delegatesToHandler() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn(ADD_EMAIL_ENDPOINT);
 
         servlet.doPost(req, resp);
@@ -204,11 +207,24 @@ class MailViewerServletTest {
     @DisplayName("doPost: unknown path delegates to handleNotFoundRequest")
     void doPost_unknownPath_delegatesToNotFound() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn("/unknown-endpoint");
 
         servlet.doPost(req, resp);
 
         verify(requestHandler).handleNotFoundRequest(resp);
+    }
+
+    @Test
+    @DisplayName("doPost: missing X-Requested-With header returns 403 without invoking handler")
+    void doPost_missingCsrfHeader_returnsForbidden() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn(null);
+
+        servlet.doPost(req, resp);
+
+        verify(resp).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing X-Requested-With header");
+        verifyNoInteractions(requestHandler, testDataInitializer);
     }
 
     // ===== doDelete — auth gate =====
@@ -243,6 +259,7 @@ class MailViewerServletTest {
     @DisplayName("doDelete: UUID in pathInfo delegates to handleDeleteByIdRequest")
     void doDelete_withUuid_delegatesToHandler() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn("/some-uuid-1234");
 
         servlet.doDelete(req, resp);
@@ -254,6 +271,7 @@ class MailViewerServletTest {
     @DisplayName("doDelete: null pathInfo delegates to handleNotFoundRequest")
     void doDelete_nullPathInfo_delegatesToNotFound() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn(null);
 
         servlet.doDelete(req, resp);
@@ -265,10 +283,23 @@ class MailViewerServletTest {
     @DisplayName("doDelete: pathInfo of just '/' delegates to handleNotFoundRequest")
     void doDelete_slashOnlyPathInfo_delegatesToNotFound() throws IOException {
         when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
         when(req.getPathInfo()).thenReturn("/");
 
         servlet.doDelete(req, resp);
 
         verify(requestHandler).handleNotFoundRequest(resp);
+    }
+
+    @Test
+    @DisplayName("doDelete: missing X-Requested-With header returns 403 without invoking handler")
+    void doDelete_missingCsrfHeader_returnsForbidden() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn(null);
+
+        servlet.doDelete(req, resp);
+
+        verify(resp).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing X-Requested-With header");
+        verifyNoInteractions(requestHandler);
     }
 }

@@ -109,6 +109,13 @@ public class MailViewerServlet extends HttpServlet {
                 return;
             }
 
+            // Защита от CSRF: браузерные cross-origin запросы не могут установить этот заголовок
+            String xrw = req.getHeader("X-Requested-With");
+            if (!"XMLHttpRequest".equals(xrw)) {
+                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Missing X-Requested-With header");
+                return;
+            }
+
             String pathInfo = req.getPathInfo();
 
             if (DELETE_ALL_ENDPOINT.equals(pathInfo)) {
@@ -138,6 +145,13 @@ public class MailViewerServlet extends HttpServlet {
         try {
             if (!authorizationService.isSystemAdmin()) {
                 handleUnauthorizedRequest(req, resp);
+                return;
+            }
+
+            // Защита от CSRF: браузерные cross-origin запросы не могут установить этот заголовок
+            String xrw = req.getHeader("X-Requested-With");
+            if (!"XMLHttpRequest".equals(xrw)) {
+                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Missing X-Requested-With header");
                 return;
             }
 

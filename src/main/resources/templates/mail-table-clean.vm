@@ -266,7 +266,10 @@
 		function createTestData() {
 			fetch("$contextPath/plugins/servlet/mail-items/create-test-data", {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'X-Requested-With': 'XMLHttpRequest'
+				},
 				body: 'atl_token=' + encodeURIComponent(getAtlToken())
 			})
 				.then(function (r) { return r.json(); })
@@ -303,7 +306,10 @@
 			deleteBtn.textContent = '⏳ Deleting...';
 			fetch("$contextPath/plugins/servlet/mail-items/delete-all", {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'X-Requested-With': 'XMLHttpRequest'
+				},
 				body: 'atl_token=' + encodeURIComponent(getAtlToken())
 			})
 				.then(function (r) { return r.json(); })
@@ -329,7 +335,7 @@
 				btn.textContent = '⏳ Удаление...';
 				fetch("$contextPath/plugins/servlet/mail-items/" + id, {
 					method: 'DELETE',
-					headers: { 'Content-Type': 'application/json' }
+					headers: { 'X-Requested-With': 'XMLHttpRequest' }
 				})
 					.then(function (r) { return r.json(); })
 					.then(function (result) {
@@ -403,20 +409,11 @@
 			const bodyContainer = document.createElement('div');
 			bodyContainer.className = 'email-body-container';
 
-			const htmlView = document.createElement('iframe');
+			// Shadow DOM изолирует стили письма от страницы JIRA; script через innerHTML не выполняются
+			const htmlView = document.createElement('div');
 			htmlView.className = 'email-body-html';
-			htmlView.setAttribute('sandbox', 'allow-same-origin');
-			htmlView.setAttribute('csp', "default-src 'none'; style-src 'unsafe-inline'");
-			htmlView.setAttribute('srcdoc', item.body || '<em style="color:#9ca3af">Пустое сообщение</em>');
-			htmlView.addEventListener('load', function () {
-				var body = htmlView.contentDocument && htmlView.contentDocument.body;
-				if (body) {
-					htmlView.style.height = (body.scrollHeight + 20) + 'px';
-					if (detailRow.classList.contains('expanded')) {
-						setAutoHeight(wrapper);
-					}
-				}
-			});
+			const shadow = htmlView.attachShadow({mode: 'open'});
+			shadow.innerHTML = item.body || '<em style="color:#9ca3af">Пустое сообщение</em>';
 
 			const rawView = document.createElement('pre');
 			rawView.className = 'email-body-raw';
