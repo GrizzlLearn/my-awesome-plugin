@@ -33,7 +33,7 @@ class MailItemApiServiceTest {
     @Test
     @DisplayName("addEmail(null) — бросает IllegalArgumentException без обращения к сервису")
     void addEmail_null_throwsIllegalArgument() {
-        assertThrows(IllegalArgumentException.class, () -> api.addEmail((Email) null));
+        assertThrows(IllegalArgumentException.class, () -> api.addEmail(null));
         verifyNoInteractions(mailItemService);
     }
 
@@ -52,14 +52,12 @@ class MailItemApiServiceTest {
     // ===== getEmailCount =====
 
     @Test
-    @SuppressWarnings("deprecation")
-    @DisplayName("getEmailCount() — использует countMailItems(), а не getAllMailItems().size()")
+    @DisplayName("getEmailCount() — использует countMailItems()")
     void getEmailCount_usesCountMailItems() {
         when(mailItemService.countMailItems()).thenReturn(7);
 
         assertEquals(7, api.getEmailCount());
         verify(mailItemService).countMailItems();
-        verify(mailItemService, never()).getAllMailItems();
     }
 
     // ===== deleteAllEmails =====
