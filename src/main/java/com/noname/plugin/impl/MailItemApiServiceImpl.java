@@ -110,7 +110,7 @@ public class MailItemApiServiceImpl implements MailItemApiService {
 
     private MailItem getOrThrow(String id) {
         MailItem item = mailItemService.getMailItemById(id);
-        if (item == null) throw new IllegalArgumentException("Email not found: " + id);
+        if (item == null) throw new IllegalArgumentException("Email not found");
         return item;
     }
 }

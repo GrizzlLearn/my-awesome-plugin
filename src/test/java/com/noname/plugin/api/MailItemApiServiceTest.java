@@ -145,7 +145,7 @@ class MailItemApiServiceTest {
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> api.getEmailFrom("bad-id"));
-        assertTrue(ex.getMessage().contains("Email not found: bad-id"));
+        assertTrue(ex.getMessage().contains("Email not found"));
     }
 
     @Test

@@ -29,6 +29,7 @@ public class MailItemRequestHandler {
     private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_TAGS_COUNT = 10;
+    private static final int MAX_LIMIT = 1000;
 
     private final MailItemService mailItemService;
 
@@ -39,7 +40,7 @@ public class MailItemRequestHandler {
 
     /**
      * Возвращает письма в виде JSON с поддержкой поиска и пагинации.
-     * Принимает параметры запроса: {@code tag}, {@code offset}, {@code limit}.
+     * Принимает параметры запроса: {@code tag}, {@code offset}, {@code limit}, {@code sinceId}.
      * Соответствует GET {@code /mail-items/data}.
      *
      * @param req  HTTP-запрос (используется для чтения параметров)
@@ -57,7 +58,7 @@ public class MailItemRequestHandler {
                 return;
             }
             int offset = parseIntParam(req.getParameter("offset"), 0);
-            int limit = parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE);
+            int limit = Math.min(parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE), MAX_LIMIT);
             // Курсор для запроса только новых писем; 0 — без фильтра (обычная загрузка)
             long sinceId = parseLongParam(req.getParameter("sinceId"));
 

@@ -1,22 +1,27 @@
 package com.noname.plugin.service;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.jira.JiraApplicationContext;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.config.properties.ApplicationProperties;
 import com.atlassian.jira.mail.Email;
 import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.noname.plugin.ao.MailItemEntity;
+import com.noname.plugin.model.MailItem;
 import net.java.ao.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -497,6 +502,77 @@ class MailItemServiceTest {
         assertNotNull(orderClause);
         assertTrue(orderClause.toUpperCase().contains("ID DESC"),
                 "Expected ORDER BY ID DESC but got: " + orderClause);
+    }
+
+    // ===== createMailItemFromJson =====
+
+    @Test
+    @DisplayName("createMailItemFromJson: минимальный JSON с 'to' — возвращает непустой UUID")
+    void createMailItemFromJson_validMinimalJson_returnsUuid() throws JSONException {
+        // Шпионим за сервисом и перехватываем createMailItem; MockedStatic нужен,
+        // т.к. конструктор MailItem вызывает ComponentAccessor через Email(to,cc,bcc)
+        try (MockedStatic<ComponentAccessor> ca = mockStatic(ComponentAccessor.class)) {
+            stubComponentAccessor(ca);
+            MailItemService spy = spy(service);
+            doReturn("test-uuid-123").when(spy).createMailItem(any(Email.class));
+
+            String result = spy.createMailItemFromJson(new JSONObject().put("to", "test@example.com"));
+
+            assertNotNull(result);
+            assertFalse(result.isEmpty());
+        }
+    }
+
+    @Test
+    @DisplayName("createMailItemFromJson: отсутствует поле 'to' — бросает IllegalArgumentException")
+    void createMailItemFromJson_missingTo_throwsIllegalArgumentException() throws JSONException {
+        // Валидация до создания MailItem — ComponentAccessor не требуется
+        JSONObject json = new JSONObject().put("subject", "Test");
+
+        assertThrows(IllegalArgumentException.class, () -> service.createMailItemFromJson(json));
+        verifyNoInteractions(ao);
+    }
+
+    @Test
+    @DisplayName("createMailItemFromJson: поле 'attachmentsName' передаётся в createMailItem")
+    void createMailItemFromJson_withAttachmentsName_setsField() throws JSONException {
+        try (MockedStatic<ComponentAccessor> ca = mockStatic(ComponentAccessor.class)) {
+            stubComponentAccessor(ca);
+            MailItemService spy = spy(service);
+            ArgumentCaptor<Email> emailCaptor = ArgumentCaptor.forClass(Email.class);
+            doReturn("uuid-attach").when(spy).createMailItem(emailCaptor.capture());
+
+            spy.createMailItemFromJson(new JSONObject().put("to", "t@e.com").put("attachmentsName", "file.pdf"));
+
+            Email captured = emailCaptor.getValue();
+            assertInstanceOf(MailItem.class, captured);
+            assertEquals("file.pdf", ((MailItem) captured).getAttachmentsName());
+        }
+    }
+
+    @Test
+    @DisplayName("createMailItemFromJson: необязательные поля отсутствуют — исключение не бросается")
+    void createMailItemFromJson_nullOptionalFields_doesNotThrow() throws JSONException {
+        try (MockedStatic<ComponentAccessor> ca = mockStatic(ComponentAccessor.class)) {
+            stubComponentAccessor(ca);
+            MailItemService spy = spy(service);
+            doReturn("uuid-no-opts").when(spy).createMailItem(any(Email.class));
+
+            assertDoesNotThrow(() -> spy.createMailItemFromJson(new JSONObject().put("to", "t@e.com")));
+        }
+    }
+
+    /**
+     * Настраивает заглушки ComponentAccessor, необходимые для работы конструктора Email в unit-тестах.
+     */
+    private static void stubComponentAccessor(MockedStatic<ComponentAccessor> ca) {
+        ApplicationProperties props = mock(ApplicationProperties.class);
+        when(props.getMailEncoding()).thenReturn("UTF-8");
+        when(props.getOption(anyString())).thenReturn(false);
+        JiraApplicationContext ctx = mock(JiraApplicationContext.class);
+        when(ctx.getFingerPrint()).thenReturn("test-fingerprint");
+        ca.when(ComponentAccessor::getApplicationProperties).thenReturn(props);
+        ca.when(() -> ComponentAccessor.getComponentOfType(JiraApplicationContext.class)).thenReturn(ctx);
     }
 
     // ===== Вспомогательный метод =====

@@ -67,7 +67,7 @@ POST и DELETE требуют прав **системного администр
 |---|---|---|---|
 | `tag` | string (повторяемый) | — | Фильтр по тегу; AND-логика — письмо должно содержать все теги; максимум 10 тегов |
 | `offset` | int | `0` | Индекс первого элемента страницы |
-| `limit` | int | `10` | Количество элементов на странице |
+| `limit` | int | `10` | Количество элементов на странице; максимум 1000 |
 | `sinceId` | long | `0` | Вернуть только письма с ID больше указанного (используется для обновления списка) |
 
 Ответ:
@@ -284,10 +284,12 @@ mvn verify
 src/test/java/com/noname/plugin/
 ├── api/
 │   └── MailItemApiServiceTest.java        — unit, публичный API (19 тестов)
+├── mapper/
+│   └── MailItemMapperTest.java            — unit, маппер entity→model (2 теста)
 ├── security/
 │   └── AuthorizationServiceImplTest.java  — unit, проверка прав (3 теста)
 ├── service/
-│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (33 теста)
+│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (37 тестов)
 ├── servlet/
 │   ├── MailViewerServletTest.java         — unit, HTTP-маршрутизация (24 теста)
 │   └── handler/
