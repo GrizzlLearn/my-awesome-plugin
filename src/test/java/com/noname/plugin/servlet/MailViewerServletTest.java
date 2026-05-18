@@ -329,6 +329,21 @@ class MailViewerServletTest {
         verify(resp).sendError(eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), any());
     }
 
+    // ===== doDelete — exception handling =====
+
+    @Test
+    @DisplayName("doDelete: requestHandler.handleDeleteByIdRequest throws IOException → sendError 500")
+    void doDelete_handlerThrowsException_sendError500() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
+        when(req.getPathInfo()).thenReturn("/some-uuid-here");
+        doThrow(new IOException("delete failed")).when(requestHandler).handleDeleteByIdRequest(anyString(), eq(resp));
+
+        servlet.doDelete(req, resp);
+
+        verify(requestHandler).handleInternalError(eq(resp), any(Exception.class));
+    }
+
     // ===== doPost — exception handling =====
 
     @Test

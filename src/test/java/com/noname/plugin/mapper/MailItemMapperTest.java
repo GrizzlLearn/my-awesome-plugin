@@ -76,6 +76,8 @@ class MailItemMapperTest {
             assertEquals("bcc@test.com", result.getBcc());
             assertEquals("Hello", result.getSubject());
             assertEquals("<p>Hi</p>", result.getBody());
+            assertEquals("file.pdf", result.getAttachmentsName());
+            assertEquals("From: from@test.com", result.getRawHeaders());
         });
     }
 }

@@ -48,7 +48,7 @@ public class MailItemRequestHandler {
      * @throws IOException если запись ответа завершилась ошибкой
      */
     public void handleDataRequest(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.setContentType(JSON_CONTENT_TYPE);
+        setJsonResponseHeaders(resp);
 
         try {
             String[] tags = req.getParameterValues("tag");

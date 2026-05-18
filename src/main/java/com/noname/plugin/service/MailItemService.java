@@ -73,7 +73,6 @@ public class MailItemService {
      * @throws JSONException            если JSON некорректен
      * @throws IllegalArgumentException если поле {@code to} пустое или отсутствует
      */
-    @Transactional
     public String createMailItemFromJson(JSONObject json) throws JSONException {
         String to = json.optString("to", null);
         String cc = json.optString("cc", null);
@@ -146,7 +145,7 @@ public class MailItemService {
     public String getAllMailItemsAsJson(String[] tags, int offset, int limit, long sinceId) throws JSONException {
         // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
         StringBuilder where = new StringBuilder();
-        List<String> params = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
         if (tags != null) {
             for (String tag : tags) {
@@ -166,7 +165,7 @@ public class MailItemService {
         if (sinceId > 0) {
             if (!where.isEmpty()) where.append(" AND ");
             where.append("ID > ?");
-            params.add(String.valueOf(sinceId));
+            params.add(sinceId);
         }
 
         int safeOffset = Math.max(0, offset);
