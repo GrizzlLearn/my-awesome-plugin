@@ -58,7 +58,6 @@ public final class MailViewerConstants {
     public static final String ACCESS_DENIED_MESSAGE      = "Access denied: Admin rights required";
     public static final String ENDPOINT_NOT_FOUND_MESSAGE = "Endpoint not found";
     public static final String INTERNAL_ERROR_MESSAGE     = "Internal server error";
-    public static final String TEMPLATE_NOT_FOUND_MESSAGE = "Template not found";
     public static final String CSS_NOT_FOUND_MESSAGE      = "CSS file not found";
 
     // --- Сообщения об успехе ---
