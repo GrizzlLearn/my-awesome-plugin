@@ -28,6 +28,7 @@ public class MailItemRequestHandler {
 
     private static final Logger log = LoggerFactory.getLogger(MailItemRequestHandler.class);
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final int MAX_TAGS_COUNT = 10;
 
     private final MailItemService mailItemService;
 
@@ -50,6 +51,11 @@ public class MailItemRequestHandler {
 
         try {
             String[] tags = req.getParameterValues("tag");
+            if (tags != null && tags.length > MAX_TAGS_COUNT) {
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                resp.getWriter().write(err("Too many tags: maximum " + MAX_TAGS_COUNT + " allowed").toString());
+                return;
+            }
             int offset = parseIntParam(req.getParameter("offset"), 0);
             int limit = parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE);
             // Курсор для запроса только новых писем; 0 — без фильтра (обычная загрузка)
@@ -193,8 +199,9 @@ public class MailItemRequestHandler {
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().write(ok("Email added successfully", payload).toString());
         } catch (JSONException e) {
-            log.error("Error parsing JSON request", e);
-            handleInternalError(resp, e);
+            log.warn("Invalid JSON in request body: {}", e.getMessage());
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            resp.getWriter().write(err("Invalid JSON").toString());
         } catch (IllegalArgumentException e) {
             log.warn("Invalid email data: {}", e.getMessage());
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);

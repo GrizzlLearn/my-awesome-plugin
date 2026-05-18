@@ -218,14 +218,15 @@ class MailItemRequestHandlerTest {
     }
 
     @Test
-    @DisplayName("handleAddEmailRequest: невалидный JSON возвращает 500")
-    void handleAddEmailRequest_invalidJson_returns500() throws IOException {
+    @DisplayName("handleAddEmailRequest: невалидный JSON возвращает 400")
+    void handleAddEmailRequest_invalidJson_returns400() throws IOException {
         when(req.getContentType()).thenReturn("application/json");
         when(req.getReader()).thenReturn(new BufferedReader(new StringReader("{not valid json")));
 
         handler.handleAddEmailRequest(req, resp);
 
-        verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        verify(resp).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        assertResponseContains("Invalid JSON");
     }
 
     @Test
@@ -278,6 +279,18 @@ class MailItemRequestHandlerTest {
 
         verify(resp).setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
         assertResponseContains("too large");
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: более 10 тегов возвращает 400, сервис не вызывается")
+    void handleDataRequest_tooManyTags_returns400() throws Exception {
+        when(req.getParameterValues("tag")).thenReturn(
+                new String[]{"t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11"});
+
+        handler.handleDataRequest(req, resp);
+
+        verify(resp).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        verifyNoInteractions(mailItemService);
     }
 
     // ===== handleDeleteByIdRequest =====
