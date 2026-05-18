@@ -302,4 +302,45 @@ class MailViewerServletTest {
         verify(resp).sendError(HttpServletResponse.SC_FORBIDDEN, "Missing X-Requested-With header");
         verifyNoInteractions(requestHandler);
     }
+
+    // ===== doGet — exception handling =====
+
+    @Test
+    @DisplayName("doGet: pageRenderer.renderTablePage throws IOException → sendError 500")
+    void doGet_rendererThrowsException_sendError500() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getRequestURI()).thenReturn(MAIL_ITEMS_ROOT);
+        doThrow(new IOException("render failed")).when(pageRenderer).renderTablePage(req, resp);
+
+        servlet.doGet(req, resp);
+
+        verify(resp).sendError(eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), any());
+    }
+
+    @Test
+    @DisplayName("doGet: requestHandler.handleDataRequest throws IOException → sendError 500")
+    void doGet_handlerThrowsException_sendError500() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getRequestURI()).thenReturn(MAIL_ITEMS_DATA);
+        doThrow(new IOException("handler failed")).when(requestHandler).handleDataRequest(req, resp);
+
+        servlet.doGet(req, resp);
+
+        verify(resp).sendError(eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), any());
+    }
+
+    // ===== doPost — exception handling =====
+
+    @Test
+    @DisplayName("doPost: requestHandler.handleDeleteAllRequest throws IOException → handleInternalError called")
+    void doPost_handlerThrowsException_sendError500() throws IOException {
+        when(authorizationService.isSystemAdmin()).thenReturn(true);
+        when(req.getHeader("X-Requested-With")).thenReturn("XMLHttpRequest");
+        when(req.getPathInfo()).thenReturn(DELETE_ALL_ENDPOINT);
+        doThrow(new IOException("delete failed")).when(requestHandler).handleDeleteAllRequest(resp);
+
+        servlet.doPost(req, resp);
+
+        verify(requestHandler).handleInternalError(eq(resp), any(Exception.class));
+    }
 }

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -404,12 +406,17 @@ class MailItemServiceTest {
     @DisplayName("deleteAllMailItemsSafe: при наличии записей — удаляет батчами и возвращает true")
     void deleteAllMailItemsSafe_withItems_deletesAndReturnsTrue() {
         // Первый батч возвращает две записи, второй — пустой (цикл завершён)
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1, entity2})
                 .thenReturn(new MailItemEntity[0]);
 
         assertTrue(service.deleteAllMailItemsSafe());
         verify(ao).delete(entity1, entity2);
+
+        // Убеждаемся, что запрос использует limit(200) — защита от загрузки всей таблицы
+        verify(ao, atLeastOnce()).find(eq(MailItemEntity.class), queryCaptor.capture());
+        assertEquals(200, queryCaptor.getValue().getLimit());
     }
 
     @Test
@@ -456,6 +463,40 @@ class MailItemServiceTest {
         service.loadTestData();
 
         verify(entity1).setSubject("Тестовое письмо #4");
+    }
+
+    // ===== deleteAllMailItemsSafe — limit =====
+
+    @Test
+    @DisplayName("deleteAllMailItemsSafe: запрос к БД использует limit(200)")
+    void deleteAllMailItemsSafe_usesLimitOf200InBatchQuery() {
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[0]);
+
+        service.deleteAllMailItemsSafe();
+
+        verify(ao).find(eq(MailItemEntity.class), queryCaptor.capture());
+        assertEquals(200, queryCaptor.getValue().getLimit());
+    }
+
+    // ===== getAllMailItemsAsJson — order =====
+
+    @Test
+    @DisplayName("getAllMailItemsAsJson: запрос к БД использует ORDER BY ID DESC")
+    void getAllMailItemsAsJson_usesOrderByIdDesc() throws JSONException {
+        stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", null);
+        when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(1);
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+        when(ao.find(eq(MailItemEntity.class), queryCaptor.capture()))
+                .thenReturn(new MailItemEntity[]{entity1});
+
+        service.getAllMailItemsAsJson(null, 0, 10, 0);
+
+        String orderClause = queryCaptor.getValue().getOrderClause();
+        assertNotNull(orderClause);
+        assertTrue(orderClause.toUpperCase().contains("ID DESC"),
+                "Expected ORDER BY ID DESC but got: " + orderClause);
     }
 
     // ===== Вспомогательный метод =====

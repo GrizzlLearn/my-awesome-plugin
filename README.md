@@ -287,9 +287,9 @@ src/test/java/com/noname/plugin/
 ├── security/
 │   └── AuthorizationServiceImplTest.java  — unit, проверка прав (3 теста)
 ├── service/
-│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (26 тестов)
+│   └── MailItemServiceTest.java           — unit, бизнес-логика с мок AO (33 теста)
 ├── servlet/
-│   ├── MailViewerServletTest.java         — unit, HTTP-маршрутизация (19 тестов)
+│   ├── MailViewerServletTest.java         — unit, HTTP-маршрутизация (24 теста)
 │   └── handler/
 │       └── MailItemRequestHandlerTest.java — unit, HTTP-логика (24 теста)
 └── wired/

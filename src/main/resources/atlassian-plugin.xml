@@ -12,11 +12,6 @@
     
     <!-- add our web resources -->
 
-    <!-- Mail Main Page -->
-    <web-resource key="mail-main-resources" name="Mail Main Resources">
-        <resource type="download" name="mail-main.html" location="templates/mail-main.html"/>
-    </web-resource>
-
     <!-- Mail Table Page -->
     <web-resource key="mail-table-resources" name="Mail Table Resources">
         <resource type="download" name="mail-table.css" location="css/mail-table.css"/>

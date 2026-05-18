@@ -23,22 +23,27 @@ public interface MailItemEntity extends Entity {
     void setUuid(String uuid);
 
     /** Адрес отправителя. */
+    @StringLength(StringLength.UNLIMITED)
     String getFrom();
     void setFrom(String from);
 
     /** Адрес основного получателя (поле «Кому»). */
+    @StringLength(StringLength.UNLIMITED)
     String getTo();
     void setTo(String to);
 
     /** Адреса получателей в копии (поле «CC»). */
+    @StringLength(StringLength.UNLIMITED)
     String getCc();
     void setCc(String cc);
 
     /** Адреса получателей в скрытой копии (поле «BCC»). */
+    @StringLength(StringLength.UNLIMITED)
     String getBcc();
     void setBcc(String bcc);
 
     /** Тема письма. */
+    @StringLength(StringLength.UNLIMITED)
     String getSubject();
     void setSubject(String subject);
 
@@ -51,6 +56,7 @@ public interface MailItemEntity extends Entity {
     void setBody(String body);
 
     /** Имена вложений через запятую. */
+    @StringLength(StringLength.UNLIMITED)
     String getAttachmentsName();
     void setAttachmentsName(String attachmentsName);
 

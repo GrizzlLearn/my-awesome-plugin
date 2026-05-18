@@ -254,6 +254,8 @@ public class MailItemRequestHandler {
     private void setJsonResponseHeaders(HttpServletResponse resp) {
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setHeader("X-Content-Type-Options", "nosniff");
+        resp.setHeader("Referrer-Policy", "no-referrer");
     }
 
     private static int parseIntParam(String value, int defaultValue) {

@@ -59,6 +59,9 @@ public class MailItemPageRenderer {
     public void renderTablePage(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
         resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        resp.setHeader("X-Content-Type-Options", "nosniff");
+        resp.setHeader("X-Frame-Options", "DENY");
+        resp.setHeader("Referrer-Policy", "no-referrer");
 
         try {
             RequiredResources requiredResources = pageBuilderService.assembler().resources();
