@@ -65,10 +65,10 @@ POST и DELETE требуют прав **системного администр
 
 | Параметр | Тип | По умолчанию | Описание |
 |---|---|---|---|
-| `tag` | string (повторяемый) | — | Фильтр по тегу; AND-логика — письмо должно содержать все теги |
+| `tag` | string (повторяемый) | — | Фильтр по тегу; AND-логика — письмо должно содержать все теги; максимум 10 тегов |
 | `offset` | int | `0` | Индекс первого элемента страницы |
 | `limit` | int | `10` | Количество элементов на странице |
-| `sinceId` | int | `0` | Вернуть только письма с ID больше указанного (используется для обновления списка) |
+| `sinceId` | long | `0` | Вернуть только письма с ID больше указанного (используется для обновления списка) |
 
 Ответ:
 ```json
@@ -291,7 +291,7 @@ src/test/java/com/noname/plugin/
 ├── servlet/
 │   ├── MailViewerServletTest.java         — unit, HTTP-маршрутизация (19 тестов)
 │   └── handler/
-│       └── MailItemRequestHandlerTest.java — unit, HTTP-логика (18 тестов)
+│       └── MailItemRequestHandlerTest.java — unit, HTTP-логика (24 теста)
 └── wired/
     ├── MailItemServiceWiredTest.java      — wired, CRUD через реальный AO
     └── MailItemModelWiredTest.java        — wired, модель и маппер
