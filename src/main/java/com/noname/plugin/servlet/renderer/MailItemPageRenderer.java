@@ -1,6 +1,7 @@
 package com.noname.plugin.servlet.renderer;
 
 import com.atlassian.sal.api.ApplicationProperties;
+import com.atlassian.templaterenderer.TemplateRenderer;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.atlassian.webresource.api.assembler.RequiredResources;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
@@ -16,15 +17,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.noname.plugin.servlet.MailViewerConstants.*;
+import static com.noname.plugin.constants.MailViewerConstants.*;
 
 /**
  * Отвечает за генерацию HTML-ответов и раздачу статических ресурсов (CSS).
  * <p>
- * Шаблоны загружаются из classpath-ресурсов плагина. Переменные, такие как {@code $contextPath},
- * подставляются вручную (без полноценного движка Velocity), чего достаточно для текущего набора шаблонов.
+ * Шаблоны рендерятся через {@link TemplateRenderer} (Velocity-движок Atlassian).
  * CSS-файлы раздаются напрямую из classpath, минуя стандартный механизм WebResource,
  * что позволяет использовать их без полной декорации страницы JIRA.
  */
@@ -35,17 +37,20 @@ public class MailItemPageRenderer {
 
     private final PageBuilderService pageBuilderService;
     private final ApplicationProperties applicationProperties;
+    private final TemplateRenderer templateRenderer;
 
     @Inject
     public MailItemPageRenderer(@ComponentImport PageBuilderService pageBuilderService,
-                                @ComponentImport ApplicationProperties applicationProperties) {
+                                @ComponentImport ApplicationProperties applicationProperties,
+                                @ComponentImport TemplateRenderer templateRenderer) {
         this.pageBuilderService = checkNotNull(pageBuilderService);
         this.applicationProperties = checkNotNull(applicationProperties);
+        this.templateRenderer = checkNotNull(templateRenderer);
     }
 
     /**
      * Отдаёт страницу с таблицей писем.
-     * Регистрирует CSS через {@link PageBuilderService}, загружает шаблон {@code .vm} и подставляет переменные.
+     * Регистрирует CSS через {@link PageBuilderService} и рендерит шаблон через {@link TemplateRenderer}.
      *
      * @param req  HTTP-запрос (используется для получения contextPath и baseUrl)
      * @param resp HTTP-ответ
@@ -53,21 +58,17 @@ public class MailItemPageRenderer {
      */
     public void renderTablePage(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType(HTML_CONTENT_TYPE);
+        resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         try {
             RequiredResources requiredResources = pageBuilderService.assembler().resources();
             requiredResources.requireWebResource(MAIL_TABLE_RESOURCES);
 
-            InputStream vmStream = getClass().getClassLoader().getResourceAsStream(TABLE_TEMPLATE_PATH);
+            Map<String, Object> context = new HashMap<>();
+            context.put("contextPath", req.getContextPath());
+            context.put("baseUrl", buildBaseUrl(req));
 
-            if (vmStream != null) {
-                String vmContent = readStreamToString(vmStream);
-                resp.getWriter().write(processVelocityTemplate(vmContent, req));
-            } else {
-                log.error("Table template not found: {}", TABLE_TEMPLATE_PATH);
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, TEMPLATE_NOT_FOUND_MESSAGE);
-            }
-
+            templateRenderer.render(TABLE_TEMPLATE_PATH, context, resp.getWriter());
         } catch (Exception e) {
             log.error("Error serving table page", e);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing template");
@@ -92,18 +93,16 @@ public class MailItemPageRenderer {
 
         resp.setContentType(CSS_CONTENT_TYPE);
 
-        InputStream cssStream = getClass().getClassLoader().getResourceAsStream(cssPath);
-
-        if (cssStream != null) {
-            try {
+        try (InputStream cssStream = getClass().getClassLoader().getResourceAsStream(cssPath)) {
+            if (cssStream != null) {
                 resp.getWriter().write(readStreamToString(cssStream));
-            } catch (IOException e) {
-                log.error("Error reading CSS file: {}", cssPath, e);
-                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error reading CSS file");
+            } else {
+                log.warn("CSS file not found: {}", cssPath);
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND, CSS_NOT_FOUND_MESSAGE);
             }
-        } else {
-            log.warn("CSS file not found: {}", cssPath);
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, CSS_NOT_FOUND_MESSAGE);
+        } catch (IOException e) {
+            log.error("Error reading CSS file: {}", cssPath, e);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error reading CSS file");
         }
     }
 
@@ -118,18 +117,6 @@ public class MailItemPageRenderer {
             }
         }
         return result.toString();
-    }
-
-    /**
-     * Выполняет простую подстановку переменных в шаблоне.
-     * Полноценный движок Velocity не используется — текущего набора переменных достаточно для шаблона.
-     */
-    private String processVelocityTemplate(String vmContent, HttpServletRequest req) {
-        return vmContent
-                .replace("$webResourceManager.requireResource(\"com.noname.plugin:mail-table-resources\")",
-                        "<!-- CSS included via WebResourceManager in servlet -->")
-                .replace("$contextPath", req.getContextPath())
-                .replace("$baseUrl", buildBaseUrl(req));
     }
 
     private String buildBaseUrl(HttpServletRequest req) {

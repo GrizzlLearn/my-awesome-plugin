@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.noname.plugin</groupId>
     <artifactId>mail-catcher</artifactId>
-    <version>0.9.8.9</version>
+    <version>0.9.9.0</version>
 
     <organization>
         <name>Atlassian SDK Tutorial</name>
@@ -109,6 +109,12 @@
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>5.11.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.atlassian.templaterenderer</groupId>
+            <artifactId>atlassian-template-renderer-api</artifactId>
+            <version>4.1.4</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Uncomment to use TestKit in your project. Details at https://bitbucket.org/atlassian/jira-testkit -->

@@ -1,4 +1,4 @@
-package com.noname.plugin.servlet;
+package com.noname.plugin.constants;
 
 /**
  * Константы для сервлета Mail Viewer: URL-паттерны, пути к ресурсам, ключи WebResource, тексты ответов.

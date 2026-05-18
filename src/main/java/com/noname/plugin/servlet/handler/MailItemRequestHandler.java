@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.noname.plugin.servlet.MailViewerConstants.*;
+import static com.noname.plugin.constants.MailViewerConstants.*;
 
 /**
  * Обработчик HTTP-запросов для операций с письмами.
@@ -59,7 +59,7 @@ public class MailItemRequestHandler {
             int offset = parseIntParam(req.getParameter("offset"), 0);
             int limit = parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE);
             // Курсор для запроса только новых писем; 0 — без фильтра (обычная загрузка)
-            int sinceId = parseIntParam(req.getParameter("sinceId"), 0);
+            long sinceId = parseLongParam(req.getParameter("sinceId"), 0L);
 
             String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit, sinceId);
             resp.setStatus(HttpServletResponse.SC_OK);
@@ -260,6 +260,16 @@ public class MailItemRequestHandler {
         if (value == null) return defaultValue;
         try {
             int v = Integer.parseInt(value);
+            return v >= 0 ? v : defaultValue;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private static long parseLongParam(String value, long defaultValue) {
+        if (value == null) return defaultValue;
+        try {
+            long v = Long.parseLong(value);
             return v >= 0 ? v : defaultValue;
         } catch (NumberFormatException e) {
             return defaultValue;

@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static com.noname.plugin.servlet.MailViewerConstants.*;
+import static com.noname.plugin.constants.MailViewerConstants.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

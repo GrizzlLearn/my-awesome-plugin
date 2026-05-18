@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.noname.plugin.servlet.MailViewerConstants.*;
+import static com.noname.plugin.constants.MailViewerConstants.*;
 
 /**
  * HTTP-точка входа для плагина просмотра почты.
@@ -71,7 +71,7 @@ public class MailViewerServlet extends HttpServlet {
                 return;
             }
 
-            if (requestURI.contains("/css/")) {
+            if (requestURI.endsWith(CSS_MAIN_PATH) || requestURI.endsWith(CSS_TABLE_PATH)) {
                 pageRenderer.serveCssFile(req, resp);
                 return;
             }

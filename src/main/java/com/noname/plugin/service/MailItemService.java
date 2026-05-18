@@ -143,7 +143,7 @@ public class MailItemService {
      * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
     @Transactional
-    public String getAllMailItemsAsJson(String[] tags, int offset, int limit, int sinceId) throws JSONException {
+    public String getAllMailItemsAsJson(String[] tags, int offset, int limit, long sinceId) throws JSONException {
         // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
         StringBuilder where = new StringBuilder();
         List<String> params = new ArrayList<>();
@@ -175,9 +175,8 @@ public class MailItemService {
         Query countQuery = Query.select();
 
         if (!where.isEmpty()) {
-            Object[] args = params.toArray();
-            pageQuery = pageQuery.where(where.toString(), args);
-            countQuery = countQuery.where(where.toString(), args);
+            pageQuery = pageQuery.where(where.toString(), params.toArray(new Object[0]));
+            countQuery = countQuery.where(where.toString(), params.toArray(new Object[0]));
         }
 
         int total = ao.count(MailItemEntity.class, countQuery);
@@ -192,7 +191,7 @@ public class MailItemService {
         }
 
         JSONArray array = new JSONArray();
-        int maxId = sinceId; // если страница пустая — курсор не регрессирует
+        long maxId = sinceId; // если страница пустая — курсор не регрессирует
         for (MailItemEntity entity : page) {
             JSONObject obj = new JSONObject();
             obj.put("id", entity.getUuid());
