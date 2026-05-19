@@ -59,6 +59,7 @@ public class MailItemService {
             entity.setAttachmentsName(mailItem.getAttachmentsName());
             entity.setRawHeaders(mailItem.getRawHeaders());
         }
+        entity.setCreatedAt(System.currentTimeMillis());
         entity.save();
         return uuid;
     }
@@ -134,15 +135,16 @@ public class MailItemService {
      * семантика AND: письмо включается только если соответствует всем переданным тегам.
      * Если {@code sinceId > 0}, возвращаются только записи с ID > sinceId (режим обновления).
      *
-     * @param tags    массив тегов поиска или {@code null} для возврата всех писем
-     * @param offset  нулевой индекс первого элемента страницы
-     * @param limit   максимальное количество элементов на странице (0 — вернуть все)
-     * @param sinceId курсор: вернуть только записи с ID строго больше этого значения; 0 — без фильтра
+     * @param tags      массив тегов поиска или {@code null} для возврата всех писем
+     * @param offset    нулевой индекс первого элемента страницы
+     * @param limit     максимальное количество элементов на странице (0 — вернуть все)
+     * @param sinceId   курсор: вернуть только записи с ID строго больше этого значения; 0 — без фильтра
+     * @param sortOrder направление сортировки: {@code "asc"} — сначала старые, {@code "desc"} — сначала новые (по умолчанию)
      * @return JSON-объект с полями {@code items}, {@code total}, {@code offset}, {@code limit}, {@code maxId}
      * @throws JSONException если построение JSON-ответа завершилось ошибкой
      */
     @Transactional
-    public String getAllMailItemsAsJson(String[] tags, int offset, int limit, long sinceId) throws JSONException {
+    public String getAllMailItemsAsJson(String[] tags, int offset, int limit, long sinceId, String sortOrder) throws JSONException {
         // Строим WHERE-условие на уровне SQL: каждый тег AND-группа по четырём полям
         StringBuilder where = new StringBuilder();
         List<Object> params = new ArrayList<>();
@@ -170,7 +172,9 @@ public class MailItemService {
 
         int safeOffset = Math.max(0, offset);
 
-        Query pageQuery = Query.select().order("ID DESC").offset(safeOffset);
+        // Направление сортировки: asc — от старых к новым, desc (по умолчанию) — от новых к старым
+        String order = "asc".equalsIgnoreCase(sortOrder) ? "ID ASC" : "ID DESC";
+        Query pageQuery = Query.select().order(order).offset(safeOffset);
         Query countQuery = Query.select();
 
         if (!where.isEmpty()) {
@@ -201,6 +205,9 @@ public class MailItemService {
             obj.put("subject", entity.getSubject());
             obj.put("body", entity.getBody());
             obj.put("attachmentsName", entity.getAttachmentsName());
+            if (entity.getCreatedAt() != null) {
+                obj.put("createdAt", (long) entity.getCreatedAt());
+            }
             // Обновляем максимальный ID среди элементов текущей страницы
             if (entity.getID() > maxId) maxId = entity.getID();
             array.put(obj);
@@ -285,6 +292,7 @@ public class MailItemService {
                     "Duis aute irure dolor in <code>reprehenderit</code> in voluptate velit esse.</p>" +
                     "<blockquote>Цитата: excepteur sint occaecat cupidatat non proident.</blockquote>"
                 );
+                entity.setCreatedAt(System.currentTimeMillis());
                 entity.save();
             }
 

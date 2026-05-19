@@ -639,3 +639,22 @@
         outline: 2px solid ButtonText;
     }
 }
+
+/* ===== DATE COLUMN ===== */
+
+.col-date { width: 130px; white-space: nowrap; }
+.date-cell { white-space: nowrap; vertical-align: top; padding-top: 10px; }
+.date-main { font-size: 13px; color: #172b4d; }
+.date-rel { font-size: 11px; color: #6b778c; margin-top: 2px; }
+
+.sort-btn {
+    background: #f4f5f7;
+    color: #172b4d;
+    border: 1px solid #dfe1e6;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.sort-btn:hover { background: #ebecf0; }

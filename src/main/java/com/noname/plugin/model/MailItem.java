@@ -27,6 +27,9 @@ public class MailItem extends Email {
     /** Полные заголовки письма в формате RFC 2822. {@code null}, если письмо создано вручную. */
     private String rawHeaders;
 
+    /** Время создания письма — Unix timestamp в миллисекундах. */
+    private Long createdAt;
+
     /**
      * @param to адрес основного получателя
      */

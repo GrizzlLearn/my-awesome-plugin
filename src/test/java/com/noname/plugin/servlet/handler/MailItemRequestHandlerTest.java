@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +46,7 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
@@ -61,12 +62,12 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(tags);
         when(req.getParameter("offset")).thenReturn("10");
         when(req.getParameter("limit")).thenReturn("5");
-        when(mailItemService.getAllMailItemsAsJson(tags, 10, 5, 0)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(tags, 10, 5, 0, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
-        verify(mailItemService).getAllMailItemsAsJson(tags, 10, 5, 0);
+        verify(mailItemService).getAllMailItemsAsJson(tags, 10, 5, 0, "desc");
     }
 
     @Test
@@ -76,12 +77,12 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn("-5");
         when(req.getParameter("limit")).thenReturn("abc");
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_OK);
-        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0, "desc");
     }
 
     @Test
@@ -92,11 +93,11 @@ class MailItemRequestHandlerTest {
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
         when(req.getParameter("sinceId")).thenReturn("42");
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 42)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 42, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
-        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 42);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 42, "desc");
     }
 
     @Test
@@ -107,11 +108,11 @@ class MailItemRequestHandlerTest {
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
         when(req.getParameter("sinceId")).thenReturn("abc");
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
-        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0, "desc");
     }
 
     @Test
@@ -122,11 +123,11 @@ class MailItemRequestHandlerTest {
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
         when(req.getParameter("sinceId")).thenReturn("-5");
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0)).thenReturn(json);
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0, "desc")).thenReturn(json);
 
         handler.handleDataRequest(req, resp);
 
-        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0);
+        verify(mailItemService).getAllMailItemsAsJson(null, 0, 10, 0, "desc");
     }
 
     @Test
@@ -135,12 +136,65 @@ class MailItemRequestHandlerTest {
         when(req.getParameterValues("tag")).thenReturn(null);
         when(req.getParameter("offset")).thenReturn(null);
         when(req.getParameter("limit")).thenReturn(null);
-        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0))
+        when(mailItemService.getAllMailItemsAsJson(null, 0, 10, 0, "desc"))
                 .thenThrow(new com.atlassian.jira.util.json.JSONException("json error"));
 
         handler.handleDataRequest(req, resp);
 
         verify(resp).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    // ===== handleDataRequest — sortOrder =====
+
+    @Test
+    @DisplayName("handleDataRequest: sortOrder=asc передаётся в сервис как \"asc\"")
+    void handleDataRequest_sortOrderAsc_passedToService() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn(null);
+        when(req.getParameter("sortOrder")).thenReturn("asc");
+        when(mailItemService.getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("asc")))
+                .thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("asc"));
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: некорректный sortOrder заменяется на \"desc\"")
+    void handleDataRequest_sortOrderInvalid_defaultsToDesc() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn(null);
+        when(req.getParameter("sortOrder")).thenReturn("INVALID");
+        when(mailItemService.getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("desc")))
+                .thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("desc"));
+    }
+
+    @Test
+    @DisplayName("handleDataRequest: отсутствующий sortOrder заменяется на \"desc\"")
+    void handleDataRequest_sortOrderAbsent_defaultsToDesc() throws Exception {
+        String json = "{\"items\":[],\"total\":0,\"offset\":0,\"limit\":10}";
+        when(req.getParameterValues("tag")).thenReturn(null);
+        when(req.getParameter("offset")).thenReturn(null);
+        when(req.getParameter("limit")).thenReturn(null);
+        when(req.getParameter("sinceId")).thenReturn(null);
+        when(req.getParameter("sortOrder")).thenReturn(null);
+        when(mailItemService.getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("desc")))
+                .thenReturn(json);
+
+        handler.handleDataRequest(req, resp);
+
+        verify(mailItemService).getAllMailItemsAsJson(any(), anyInt(), anyInt(), anyLong(), eq("desc"));
     }
 
     // ===== handleDeleteAllRequest =====

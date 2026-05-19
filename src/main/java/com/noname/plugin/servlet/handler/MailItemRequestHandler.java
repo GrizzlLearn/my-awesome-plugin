@@ -40,7 +40,7 @@ public class MailItemRequestHandler {
 
     /**
      * Возвращает письма в виде JSON с поддержкой поиска и пагинации.
-     * Принимает параметры запроса: {@code tag}, {@code offset}, {@code limit}, {@code sinceId}.
+     * Принимает параметры запроса: {@code tag}, {@code offset}, {@code limit}, {@code sinceId}, {@code sortOrder}.
      * Соответствует GET {@code /mail-items/data}.
      *
      * @param req  HTTP-запрос (используется для чтения параметров)
@@ -61,8 +61,13 @@ public class MailItemRequestHandler {
             int limit = Math.min(parseIntParam(req.getParameter("limit"), DEFAULT_PAGE_SIZE), MAX_LIMIT);
             // Курсор для запроса только новых писем; 0 — без фильтра (обычная загрузка)
             long sinceId = parseLongParam(req.getParameter("sinceId"));
+            // Направление сортировки: разрешены только "asc" и "desc"; любое другое значение → "desc"
+            String sortOrder = req.getParameter("sortOrder");
+            if (sortOrder == null || (!sortOrder.equals("asc") && !sortOrder.equals("desc"))) {
+                sortOrder = "desc";
+            }
 
-            String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit, sinceId);
+            String jsonData = mailItemService.getAllMailItemsAsJson(tags, offset, limit, sinceId, sortOrder);
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.getWriter().write(jsonData);
         } catch (JSONException e) {

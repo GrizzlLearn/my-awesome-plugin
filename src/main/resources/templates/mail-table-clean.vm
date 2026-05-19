@@ -23,6 +23,7 @@
 		</button>
 		<a href="$contextPath/plugins/servlet/mail-items/data" target="_blank" class="json-btn">📊 View JSON</a>
 		<button id="refresh-btn" class="refresh-btn">🔄 Обновить</button>
+		<button id="sort-btn" class="sort-btn">Сначала новые ↓</button>
 	</div>
 	<div class="search-bar">
 		<div class="tag-input-container" id="tag-input-container">
@@ -49,6 +50,7 @@
 				<tr>
 					<th class="col-from">От</th>
 					<th class="col-subject">Тема</th>
+					<th class="col-date">Дата</th>
 				</tr>
 				</thead>
 				<tbody id="mail-items-body">
@@ -99,6 +101,7 @@
 		// ===== State =====
 		let PAGE_SIZE = 10;
 		let currentOffset = 0;
+		let sortOrder = 'desc';
 		let currentTags = [];
 		let preserveScroll = false;
 		// Курсор обновления: максимальный ID среди всех загруженных писем
@@ -205,6 +208,18 @@
 			return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 		}
 
+		function timeAgo(ms) {
+			if (!ms) return '';
+			const diff = Math.floor((Date.now() - ms) / 1000);
+			if (diff < 60) return 'только что';
+			if (diff < 3600) { const m = Math.floor(diff / 60); return m + ' мин. назад'; }
+			if (diff < 86400) { const h = Math.floor(diff / 3600); return h + ' ч. назад'; }
+			if (diff < 2592000) { const d = Math.floor(diff / 86400); return d + ' д. назад'; }
+			if (diff < 31536000) { const mo = Math.floor(diff / 2592000); return mo + ' мес. назад'; }
+			const y = Math.floor(diff / 31536000);
+			return y + ' г. назад';
+		}
+
 
 		// ===== Load data =====
 		function loadData() {
@@ -229,6 +244,7 @@
 			currentTags.forEach(function (tag) { params.append('tag', tag); });
 			params.set('offset', currentOffset);
 			params.set('limit', PAGE_SIZE);
+			params.set('sortOrder', sortOrder);
 
 			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString(), { signal: currentLoadController.signal })
 				.then(function (response) {
@@ -386,7 +402,7 @@
 			detailRow.className = "detail-row";
 
 			const detailCell = document.createElement("td");
-			detailCell.colSpan = 2;
+			detailCell.colSpan = 3;
 
 			const wrapper = document.createElement('div');
 			wrapper.className = 'detail-wrapper';
@@ -529,8 +545,34 @@
 			subjectCell.appendChild(subjectDiv);
 			subjectCell.appendChild(previewDiv);
 
+			const dateCell = document.createElement("td");
+			dateCell.className = "date-cell";
+
+			if (item.createdAt != null && item.createdAt > 0) {
+				const dt = new Date(item.createdAt);
+				const formatted = dt.toLocaleString('ru-RU', {
+					day: '2-digit', month: '2-digit', year: 'numeric',
+					hour: '2-digit', minute: '2-digit'
+				});
+				const ago = timeAgo(item.createdAt);
+
+				const dateMain = document.createElement('div');
+				dateMain.className = 'date-main';
+				dateMain.textContent = formatted;
+
+				const dateRel = document.createElement('div');
+				dateRel.className = 'date-rel';
+				dateRel.textContent = '(' + ago + ')';
+
+				dateCell.appendChild(dateMain);
+				dateCell.appendChild(dateRel);
+			} else {
+				dateCell.textContent = '—';
+			}
+
 			row.appendChild(fromCell);
 			row.appendChild(subjectCell);
+			row.appendChild(dateCell);
 
 			// Строка с деталями
 			const detailRow = createDetailRow(item);
@@ -676,6 +718,7 @@
 			const params = new URLSearchParams();
 			params.set('sinceId', lastMaxId);
 			params.set('limit', REFRESH_LIMIT);
+			params.set('sortOrder', sortOrder);
 			currentTags.forEach(function (tag) { params.append('tag', tag); });
 
 			fetch("$contextPath/plugins/servlet/mail-items/data?" + params.toString())
@@ -718,6 +761,12 @@
 		document.getElementById('create-test-data-btn').addEventListener('click', createTestData);
 		document.getElementById('delete-all-btn').addEventListener('click', deleteAllMailItems);
 		document.getElementById('refresh-btn').addEventListener('click', refreshNewItems);
+		document.getElementById('sort-btn').addEventListener('click', function () {
+			sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+			this.textContent = sortOrder === 'desc' ? 'Сначала новые ↓' : 'Сначала старые ↑';
+			currentOffset = 0;
+			loadData();
+		});
 
 		loadData();
 	});

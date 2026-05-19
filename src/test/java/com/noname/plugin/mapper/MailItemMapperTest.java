@@ -66,6 +66,7 @@ class MailItemMapperTest {
         when(entity.getBody()).thenReturn("<p>Hi</p>");
         when(entity.getAttachmentsName()).thenReturn("file.pdf");
         when(entity.getRawHeaders()).thenReturn("From: from@test.com");
+        when(entity.getCreatedAt()).thenReturn(1716000000000L);
 
         withMockedJiraContext(() -> {
             MailItem result = MailItemMapper.toDtoFull(entity);
@@ -78,6 +79,7 @@ class MailItemMapperTest {
             assertEquals("<p>Hi</p>", result.getBody());
             assertEquals("file.pdf", result.getAttachmentsName());
             assertEquals("From: from@test.com", result.getRawHeaders());
+            assertEquals(1716000000000L, result.getCreatedAt());
         });
     }
 }

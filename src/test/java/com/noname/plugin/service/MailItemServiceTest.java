@@ -101,7 +101,7 @@ class MailItemServiceTest {
         // Без тегов WHERE-условия нет; ao.count вызывается с Query без WHERE
         when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(0);
 
-        String json = service.getAllMailItemsAsJson((String[]) null, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson((String[]) null, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(0, result.getJSONArray("items").length());
@@ -118,7 +118,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1, entity2, entity3});
 
-        String json = service.getAllMailItemsAsJson((String[]) null, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson((String[]) null, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(3, result.getInt("total"));
@@ -131,7 +131,7 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_responseContainsRequiredFields() throws JSONException {
         when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(0);
 
-        String json = service.getAllMailItemsAsJson((String[]) null, 5, 20, 0);
+        String json = service.getAllMailItemsAsJson((String[]) null, 5, 20, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertTrue(result.has("items"));
@@ -153,7 +153,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        String json = service.getAllMailItemsAsJson(new String[]{"ALICE"}, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson(new String[]{"ALICE"}, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getInt("total"));
@@ -169,7 +169,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        String json = service.getAllMailItemsAsJson(new String[]{"отчёт"}, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson(new String[]{"отчёт"}, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getInt("total"));
@@ -184,7 +184,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        String json = service.getAllMailItemsAsJson(new String[]{"lorem"}, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson(new String[]{"lorem"}, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getInt("total"));
@@ -200,7 +200,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        String json = service.getAllMailItemsAsJson(new String[]{"example", "lorem"}, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson(new String[]{"example", "lorem"}, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getInt("total"));
@@ -213,7 +213,7 @@ class MailItemServiceTest {
         // SQL-фильтрация не нашла совпадений
         when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(0);
 
-        String json = service.getAllMailItemsAsJson(new String[]{"zzznomatch"}, 0, 10, 0);
+        String json = service.getAllMailItemsAsJson(new String[]{"zzznomatch"}, 0, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(0, result.getInt("total"));
@@ -229,7 +229,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        assertDoesNotThrow(() -> service.getAllMailItemsAsJson(new String[]{"test"}, 0, 10, 0));
+        assertDoesNotThrow(() -> service.getAllMailItemsAsJson(new String[]{"test"}, 0, 10, 0, "desc"));
     }
 
     // ===== getAllMailItemsAsJson — пагинация =====
@@ -244,7 +244,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity2, entity3});
 
-        String json = service.getAllMailItemsAsJson(null, 1, 10, 0);
+        String json = service.getAllMailItemsAsJson(null, 1, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(3, result.getInt("total"));
@@ -262,7 +262,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1, entity2});
 
-        String json = service.getAllMailItemsAsJson(null, 0, 2, 0);
+        String json = service.getAllMailItemsAsJson(null, 0, 2, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(3, result.getInt("total"));
@@ -278,7 +278,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[0]);
 
-        String json = service.getAllMailItemsAsJson(null, 100, 10, 0);
+        String json = service.getAllMailItemsAsJson(null, 100, 10, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getInt("total"));
@@ -294,7 +294,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1, entity2});
 
-        String json = service.getAllMailItemsAsJson(null, 0, 0, 0);
+        String json = service.getAllMailItemsAsJson(null, 0, 0, 0, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(2, result.getJSONArray("items").length());
@@ -314,7 +314,7 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity2, entity3});
 
-        String json = service.getAllMailItemsAsJson(null, 0, 10, 3);
+        String json = service.getAllMailItemsAsJson(null, 0, 10, 3, "desc");
 
         JSONObject result = new JSONObject(json);
         // Только записи после sinceId=3
@@ -328,7 +328,7 @@ class MailItemServiceTest {
     void getAllMailItemsAsJson_withSinceId_noNewItems_maxIdEqualsSinceId() throws JSONException {
         when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(0);
 
-        String json = service.getAllMailItemsAsJson(null, 0, 10, 42);
+        String json = service.getAllMailItemsAsJson(null, 0, 10, 42, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(0, result.getJSONArray("items").length());
@@ -345,12 +345,32 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), any(Query.class)))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        String json = service.getAllMailItemsAsJson(new String[]{"alice"}, 0, 10, 5);
+        String json = service.getAllMailItemsAsJson(new String[]{"alice"}, 0, 10, 5, "desc");
 
         JSONObject result = new JSONObject(json);
         assertEquals(1, result.getJSONArray("items").length());
         assertEquals(10, result.getInt("maxId"));
         assertEquals(1, result.getInt("total"));
+    }
+
+    // ===== getAllMailItemsAsJson — createdAt =====
+
+    @Test
+    @DisplayName("getAllMailItemsAsJson: поле createdAt присутствует в ответе для записей с меткой времени")
+    void getAllMailItemsAsJson_includesCreatedAtInResponse() throws JSONException {
+        stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", null);
+        // Переопределяем stub: у этой записи проставлен createdAt
+        when(entity1.getCreatedAt()).thenReturn(1716000000000L);
+        when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(1);
+        when(ao.find(eq(MailItemEntity.class), any(Query.class)))
+                .thenReturn(new MailItemEntity[]{entity1});
+
+        String json = service.getAllMailItemsAsJson(null, 0, 10, 0, "desc");
+
+        JSONObject result = new JSONObject(json);
+        JSONObject item = result.getJSONArray("items").getJSONObject(0);
+        assertTrue(item.has("createdAt"), "Поле createdAt должно присутствовать в элементе");
+        assertEquals(1716000000000L, item.getLong("createdAt"));
     }
 
     // ===== getMailItemById =====
@@ -496,12 +516,29 @@ class MailItemServiceTest {
         when(ao.find(eq(MailItemEntity.class), queryCaptor.capture()))
                 .thenReturn(new MailItemEntity[]{entity1});
 
-        service.getAllMailItemsAsJson(null, 0, 10, 0);
+        service.getAllMailItemsAsJson(null, 0, 10, 0, "desc");
 
         String orderClause = queryCaptor.getValue().getOrderClause();
         assertNotNull(orderClause);
         assertTrue(orderClause.toUpperCase().contains("ID DESC"),
                 "Expected ORDER BY ID DESC but got: " + orderClause);
+    }
+
+    @Test
+    @DisplayName("getAllMailItemsAsJson: sortOrder=asc — запрос к БД использует ORDER BY ID ASC")
+    void getAllMailItemsAsJson_sortOrderAsc_usesAscOrder() throws JSONException {
+        stubEntity(entity1, "uuid-1", "a@t.com", "x@t.com", "Тема", null);
+        when(ao.count(eq(MailItemEntity.class), any(Query.class))).thenReturn(1);
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+        when(ao.find(eq(MailItemEntity.class), queryCaptor.capture()))
+                .thenReturn(new MailItemEntity[]{entity1});
+
+        service.getAllMailItemsAsJson(null, 0, 10, 0, "asc");
+
+        String orderClause = queryCaptor.getValue().getOrderClause();
+        assertNotNull(orderClause);
+        assertTrue(orderClause.toUpperCase().contains("ID ASC"),
+                "Expected ORDER BY ID ASC but got: " + orderClause);
     }
 
     // ===== createMailItemFromJson =====
@@ -587,5 +624,6 @@ class MailItemServiceTest {
         lenient().when(entity.getSubject()).thenReturn(subject);
         lenient().when(entity.getBody()).thenReturn(body);
         lenient().when(entity.getAttachmentsName()).thenReturn(null);
+        lenient().when(entity.getCreatedAt()).thenReturn(null);
     }
 }

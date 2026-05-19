@@ -67,4 +67,8 @@ public interface MailItemEntity extends Entity {
     @StringLength(StringLength.UNLIMITED)
     String getRawHeaders();
     void setRawHeaders(String rawHeaders);
+
+    /** Время создания письма — Unix timestamp в миллисекундах. */
+    Long getCreatedAt();
+    void setCreatedAt(Long createdAt);
 }
